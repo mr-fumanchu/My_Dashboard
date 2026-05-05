@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/theme.js"></script>
+  <style>
+    .report-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .report-table th {
+      text-align: left; padding: 0.6rem 1rem;
+      background: var(--gray-900); color: var(--yellow-400);
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .report-table th:first-child { border-radius: var(--radius) 0 0 0; }
+    .report-table th:last-child { border-radius: 0 var(--radius) 0 0; }
+    .report-table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--gray-200); }
+    .report-table tr:last-child td { border-bottom: none; }
+    .report-table tr:hover td { background: var(--yellow-100); }
+    .badge {
+      display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 600;
+    }
+    .badge-green { background: #d4edda; color: #155724; }
+    .badge-yellow { background: var(--yellow-100); color: #856404; }
+    .badge-gray { background: var(--gray-200); color: var(--gray-600); }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1 class="header-title">Dashboard</h1>
+    <nav class="header-nav">
+      <a href="index.html">Home</a>
+      <a href="reports.html" class="active" style="color:var(--yellow-400)">Reports</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="tasks.html">Tasks</a></li>
+        <li><a href="messages.html">Messages</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+      </ul>
+    </aside>
+
+    <section class="content">
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Total Reports</div>
+          <div class="card-value">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Published</div>
+          <div class="card-value">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Draft</div>
+          <div class="card-value">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Archived</div>
+          <div class="card-value">—</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">All Reports</h2>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Report Name</th>
+              <th>Date</th>
+              <th>Author</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Sample Report A</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="badge badge-green">Published</span></td>
+            </tr>
+            <tr>
+              <td>Sample Report B</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="badge badge-yellow">Draft</span></td>
+            </tr>
+            <tr>
+              <td>Sample Report C</td>
+              <td>—</td>
+              <td>—</td>
+              <td><span class="badge badge-gray">Archived</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

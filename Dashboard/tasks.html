@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tasks — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/theme.js"></script>
+  <style>
+    .task-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .task-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.75rem 1rem; background: var(--gray-100);
+      border-radius: var(--radius); border-left: 3px solid var(--gray-400);
+    }
+    .task-item.done { opacity: 0.5; border-left-color: var(--yellow-400); }
+    .task-item input[type="checkbox"] { accent-color: var(--yellow-400); width: 16px; height: 16px; }
+    .task-label { font-size: 0.9rem; }
+    .task-item.done .task-label { text-decoration: line-through; color: var(--gray-400); }
+    .task-meta { margin-left: auto; font-size: 0.75rem; color: var(--gray-400); }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1 class="header-title">Dashboard</h1>
+    <nav class="header-nav">
+      <a href="index.html">Home</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="tasks.html" class="active">Tasks</a></li>
+        <li><a href="messages.html">Messages</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+      </ul>
+    </aside>
+
+    <section class="content">
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Total Tasks</div>
+          <div class="card-value">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">In Progress</div>
+          <div class="card-value">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Completed</div>
+          <div class="card-value">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Overdue</div>
+          <div class="card-value">—</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Task List</h2>
+        <ul class="task-list">
+          <li class="task-item">
+            <input type="checkbox" />
+            <span class="task-label">Sample task one</span>
+            <span class="task-meta">Due: —</span>
+          </li>
+          <li class="task-item">
+            <input type="checkbox" />
+            <span class="task-label">Sample task two</span>
+            <span class="task-meta">Due: —</span>
+          </li>
+          <li class="task-item done">
+            <input type="checkbox" checked />
+            <span class="task-label">Sample task three</span>
+            <span class="task-meta">Done</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

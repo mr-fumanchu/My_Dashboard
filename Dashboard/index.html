@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/theme.js"></script>
+  <style>
+    /* ── Full-height shell ─────────────────────────────────────── */
+    html, body { height: 100vh; overflow: hidden; }
+    body { display: flex; flex-direction: column; }
+
+    /* ── Tab bar ───────────────────────────────────────────────── */
+    #tab-bar {
+      background: var(--gray-800);
+      display: flex;
+      align-items: flex-end;
+      padding: 5px 8px 0;
+      gap: 2px;
+      height: 38px;
+      flex-shrink: 0;
+      border-bottom: 2px solid var(--gray-700);
+    }
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 10px;
+      height: 30px;
+      border-radius: 6px 6px 0 0;
+      background: var(--gray-700);
+      color: var(--gray-400);
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 500;
+      user-select: none;
+      max-width: 200px;
+      min-width: 100px;
+      transition: background 0.1s, color 0.1s;
+      flex-shrink: 0;
+    }
+    .tab:hover:not(.active) { background: var(--gray-600); color: #fff; }
+    .tab.active {
+      background: #0d0d0d;
+      color: #e0e0e0;
+      font-weight: 600;
+    }
+
+    /* Loading spinner in tab */
+    @keyframes tab-spin { to { transform: rotate(360deg); } }
+    .tab-icon {
+      width: 10px; height: 10px; flex-shrink: 0; display: none;
+    }
+    .tab.loading .tab-icon {
+      display: inline-block;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-top-color: var(--yellow-400);
+      border-radius: 50%;
+      animation: tab-spin 0.65s linear infinite;
+    }
+    .tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .tab-x {
+      background: none; border: none; color: inherit;
+      font-size: 0.95rem; cursor: pointer; padding: 0;
+      opacity: 0; transition: opacity 0.1s; line-height: 1; flex-shrink: 0;
+      margin-left: 2px;
+    }
+    .tab:hover .tab-x, .tab.active .tab-x { opacity: 0.5; }
+    .tab-x:hover { opacity: 1 !important; }
+    #btn-newtab {
+      display: flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: none; border: none;
+      color: var(--gray-400); font-size: 1.1rem; cursor: pointer;
+      transition: background 0.15s, color 0.15s; flex-shrink: 0; margin-left: 2px;
+    }
+    #btn-newtab:hover { background: var(--gray-700); color: #fff; }
+
+    /* ── Tab panels container ──────────────────────────────────── */
+    #tab-panels { flex: 1; overflow: hidden; position: relative; }
+    .tab-panel { display: none; height: 100%; overflow-y: auto; }
+    .tab-panel.active { display: flex; flex-direction: column; }
+
+    /* ── Dashboard panel overrides ─────────────────────────────── */
+    #panel-dashboard .main { flex: 1; }
+    #panel-dashboard .sidebar { min-height: 100%; }
+
+    /* ── Browser panel ─────────────────────────────────────────── */
+    .browser-panel.active { display: flex; overflow: hidden; }
+    .b-toolbar {
+      display: flex; align-items: center; gap: 4px;
+      padding: 0 8px; height: 44px;
+      background: var(--gray-800);
+      border-bottom: 2px solid var(--yellow-400);
+      flex-shrink: 0;
+    }
+    .b-btn {
+      width: 30px; height: 30px; border-radius: 6px; border: none;
+      background: transparent; color: var(--gray-400); font-size: 1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s; flex-shrink: 0;
+    }
+    .b-btn:hover:not(:disabled) { background: var(--gray-700); color: #fff; }
+    .b-btn:disabled { opacity: 0.3; cursor: default; }
+    .b-sep { width: 1px; height: 20px; background: var(--gray-700); flex-shrink: 0; margin: 0 2px; }
+    .b-url-wrap {
+      flex: 1; display: flex; align-items: center;
+      background: var(--gray-700); border-radius: 6px;
+      border: 1px solid transparent; height: 32px; overflow: hidden;
+      transition: border-color 0.15s; margin: 0 4px;
+    }
+    .b-url-wrap:focus-within { border-color: var(--yellow-400); }
+    .b-scheme { padding: 0 4px 0 8px; font-size: 0.72rem; color: var(--gray-400); flex-shrink: 0; }
+    .b-url {
+      flex: 1; border: none; outline: none; background: transparent;
+      color: #fff; font-size: 0.82rem; padding: 0 4px 0 0; min-width: 0;
+    }
+    .b-url::placeholder { color: var(--gray-400); }
+    .b-go {
+      padding: 0 10px; height: 100%; border: none;
+      background: var(--gray-600); color: var(--gray-400);
+      font-size: 0.78rem; cursor: pointer; flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .b-go:hover { background: var(--yellow-400); color: var(--gray-900); }
+    .b-notice {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.45rem 1rem; font-size: 0.78rem;
+      background: var(--yellow-100); border-bottom: 1px solid var(--yellow-300);
+      color: var(--gray-900); flex-shrink: 0;
+    }
+    .b-notice[hidden] { display: none; }
+    .b-notice-open {
+      background: var(--gray-900); color: #fff; border: none;
+      border-radius: 4px; padding: 2px 8px; font-size: 0.72rem;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .b-notice-x {
+      margin-left: auto; background: none; border: none;
+      cursor: pointer; font-size: 1rem; color: var(--gray-600);
+    }
+    .b-iframe { flex: 1; border: none; width: 100%; background: #fff; }
+
+    /* Proxy toggle pill */
+    .b-proxy-btn {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em;
+      padding: 0 9px; height: 22px; border-radius: 999px;
+      border: 1.5px solid var(--gray-600); background: transparent;
+      color: var(--gray-500); cursor: pointer; flex-shrink: 0;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      align-self: center;
+    }
+    .b-proxy-btn:hover { border-color: var(--gray-400); color: #fff; }
+    .b-proxy-btn.proxy-on {
+      background: rgba(74,222,128,0.18) !important;
+      border-color: #4ade80 !important;
+      color: #4ade80 !important;
+    }
+
+    /* ── Overview two-column layout ────────────────────────────── */
+    .content {
+      flex-direction: row !important;
+      align-items: flex-start;
+      gap: 1.5rem;
+    }
+    .overview-left {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column; gap: 2rem;
+    }
+
+    /* Open Browser button */
+    .open-browser-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1rem; background: var(--gray-900);
+      color: var(--yellow-400); border: 2px solid var(--yellow-400);
+      border-radius: var(--radius); font-weight: 700; font-size: 0.875rem;
+      cursor: pointer; transition: background 0.15s, color 0.15s;
+      align-self: flex-start;
+    }
+    .open-browser-btn:hover { background: var(--yellow-400); color: var(--gray-900); }
+
+    /* LLM panel */
+    .llm-panel {
+      width: 360px; flex-shrink: 0; background: #1a1a1a;
+      border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      display: flex; flex-direction: column;
+      min-height: calc(100vh - 56px - 38px - 4rem);
+    }
+    .llm-header {
+      padding: 1rem 1.25rem 0.85rem;
+      border-bottom: 2px solid var(--yellow-100);
+      display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    .llm-title-row { display: flex; align-items: center; gap: 0.5rem; }
+    .llm-title {
+      font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--gray-600); cursor: text;
+    }
+    .llm-title-input {
+      font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--gray-900); border: none;
+      border-bottom: 2px solid var(--yellow-400); outline: none;
+      background: transparent; width: 180px; padding: 0 2px;
+    }
+    .llm-edit-btn {
+      background: none; border: none; cursor: pointer; color: var(--gray-400);
+      font-size: 0.85rem; padding: 0 2px; line-height: 1;
+      opacity: 0; transition: opacity 0.15s, color 0.15s;
+    }
+    .llm-title-row:hover .llm-edit-btn { opacity: 1; }
+    .llm-edit-btn:hover { color: var(--gray-900); }
+    .llm-select {
+      width: 100%; padding: 0.45rem 0.7rem;
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius);
+      background: #fff; font-size: 0.875rem; color: var(--text-primary);
+      cursor: pointer; outline: none; transition: border-color 0.15s; appearance: auto;
+    }
+    .llm-select:focus { border-color: var(--yellow-400); }
+    .llm-frame-wrap { flex: 1; display: flex; flex-direction: column; }
+    .llm-frame { flex: 1; width: 100%; border: none; min-height: 400px; }
+    .llm-blocked {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 0.75rem; padding: 2rem; text-align: center;
+    }
+    .llm-blocked-icon { font-size: 2.5rem; line-height: 1; }
+    .llm-blocked-msg { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+    .llm-blocked-msg strong { color: var(--gray-900); }
+    .llm-open-btn {
+      display: inline-block; padding: 0.55rem 1.25rem; background: var(--yellow-400);
+      border: none; border-radius: var(--radius); font-weight: 700; font-size: 0.9rem;
+      cursor: pointer; text-decoration: none; color: var(--gray-900); transition: background 0.15s;
+    }
+    .llm-open-btn:hover { background: var(--yellow-300); }
+    .llm-footer { padding: 0.5rem 1rem; border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; }
+    .llm-newtab { font-size: 0.75rem; color: var(--gray-400); text-decoration: none; }
+    .llm-newtab:hover { color: var(--gray-900); text-decoration: underline; }
+
+    /* Today panel */
+    .today-list { list-style: none; display: flex; flex-direction: column; gap: 0; }
+    .today-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--gray-200); }
+    .today-item:last-child { border-bottom: none; }
+    .today-time { font-size: 0.75rem; color: var(--gray-400); min-width: 58px; flex-shrink: 0; }
+    .today-text { flex: 1; font-size: 0.9rem; color: var(--text-primary); }
+    .today-badge { font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; text-transform: capitalize; }
+    .today-badge.task     { background: #e3f2fd; color: #1565c0; }
+    .today-badge.reminder { background: var(--yellow-100); color: #7a5900; }
+    .today-badge.event    { background: #f3e5f5; color: #6a1b9a; }
+    .today-empty { font-size: 0.875rem; color: var(--gray-400); padding: 0.25rem 0; }
+    .today-add-link { font-size: 0.78rem; color: var(--gray-400); text-decoration: none; display: inline-block; margin-top: 0.6rem; }
+    .today-add-link:hover { color: var(--yellow-400); }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────── -->
+  <header class="header">
+    <h1 class="header-title">Dashboard</h1>
+    <nav class="header-nav">
+      <a href="index.html">Home</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+  </header>
+
+  <!-- ── Tab bar ────────────────────────────────────────────────── -->
+  <div id="tab-bar">
+    <div class="tab active" data-panel="dashboard">
+      <span class="tab-icon"></span>
+      <span class="tab-title">Dashboard</span>
+    </div>
+    <!-- browser tabs injected here -->
+    <button id="btn-newtab" title="Open Browser">+</button>
+  </div>
+
+  <!-- ── Tab panels ─────────────────────────────────────────────── -->
+  <div id="tab-panels">
+
+    <!-- Dashboard panel -->
+    <div class="tab-panel active" id="panel-dashboard">
+      <main class="main">
+        <aside class="sidebar">
+          <ul class="sidebar-nav">
+            <li><a href="index.html" class="active">Overview</a></li>
+            <li><a href="analytics.html">Analytics</a></li>
+            <li><a href="tasks.html">Tasks</a></li>
+            <li><a href="messages.html">Messages</a></li>
+            <li><a href="calendar.html">Calendar</a></li>
+          </ul>
+        </aside>
+
+        <section class="content">
+          <div class="overview-left">
+
+            <button class="open-browser-btn" id="btn-open-browser">
+              &#127760; Open Browser
+            </button>
+
+            <div class="cards">
+              <div class="card"><div class="card-label">Total Items</div><div class="card-value">—</div></div>
+              <div class="card"><div class="card-label">Active</div><div class="card-value">—</div></div>
+              <div class="card"><div class="card-label">Pending</div><div class="card-value">—</div></div>
+              <div class="card"><div class="card-label">Completed</div><div class="card-value">—</div></div>
+            </div>
+
+            <div class="panel" id="today-panel">
+              <h2 class="panel-title" id="today-heading">Today</h2>
+              <ul class="today-list" id="today-list"></ul>
+            </div>
+
+            <div class="panel">
+              <h2 class="panel-title">Recent Activity</h2>
+              <p class="placeholder">Nothing here yet.</p>
+            </div>
+          </div>
+
+          <!-- AI Assistant panel -->
+          <div class="llm-panel">
+            <div class="llm-header">
+              <div class="llm-title-row">
+                <span class="llm-title" id="llm-title">AI Assistant</span>
+                <button class="llm-edit-btn" id="llm-edit-btn" title="Rename">✎</button>
+              </div>
+              <select class="llm-select" id="llm-select">
+                <option value="">— Choose an assistant —</option>
+                <option value="claude"     data-url="https://claude.ai">Claude (Anthropic)</option>
+                <option value="chatgpt"    data-url="https://chatgpt.com">ChatGPT (OpenAI)</option>
+                <option value="gemini"     data-url="https://gemini.google.com">Gemini (Google)</option>
+                <option value="perplexity" data-url="https://perplexity.ai">Perplexity</option>
+                <option value="grok"       data-url="https://grok.com">Grok (xAI)</option>
+                <option value="copilot"    data-url="https://copilot.microsoft.com">Copilot (Microsoft)</option>
+              </select>
+            </div>
+            <div class="llm-frame-wrap" id="llm-frame-wrap">
+              <div class="llm-blocked">
+                <div class="llm-blocked-icon">🤖</div>
+                <div class="llm-blocked-msg">Choose an AI assistant above.<br/>Add API keys in <a href="settings.html">Settings</a>.</div>
+              </div>
+            </div>
+            <div class="llm-footer">
+              <a href="#" id="llm-newtab" class="llm-newtab" target="_blank" rel="noopener" style="display:none">Open in new tab ↗</a>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <!-- browser tab panels injected here -->
+
+  </div><!-- /#tab-panels -->
+
+  <script src="js/app.js"></script>
+  <script>
+    // ════════════════════════════════════════════════════════════
+    // Proxy state — runs node proxy.js to make any site load
+    // ════════════════════════════════════════════════════════════
+    // Proxy works when served by server.js (http://localhost:3000)
+    const _servedLocally = location.protocol === 'http:' && location.hostname === 'localhost';
+    const proxyState = { ok: _servedLocally, on: _servedLocally, base: '/proxy/' };
+
+    function syncProxyBtns() {
+      document.querySelectorAll('.b-proxy-btn').forEach(btn => {
+        btn.classList.toggle('proxy-on',  proxyState.ok && proxyState.on);
+        btn.classList.toggle('proxy-off', !(proxyState.ok && proxyState.on));
+        btn.title = proxyState.ok
+          ? (proxyState.on ? 'Proxy ON — click to disable' : 'Proxy OFF — click to enable')
+          : 'Run  node server.js  then open http://localhost:3000';
+      });
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // Tab system
+    // ════════════════════════════════════════════════════════════
+    let tabSeq = 0;
+    const browserTabs = {};
+
+    function activateTab(panelId) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      const tab   = document.querySelector(`.tab[data-panel="${panelId}"]`);
+      const panel = document.getElementById(`panel-${panelId}`);
+      if (tab)   tab.classList.add('active');
+      if (panel) panel.classList.add('active');
+    }
+
+    // Tab bar delegation
+    document.getElementById('tab-bar').addEventListener('click', e => {
+      const xBtn = e.target.closest('.tab-x');
+      if (xBtn) {
+        e.stopPropagation();
+        const id = xBtn.dataset.id;
+        const t  = document.querySelector(`.tab[data-panel="${id}"]`);
+        if (t && t.classList.contains('active')) activateTab('dashboard');
+        t?.remove();
+        document.getElementById(`panel-${id}`)?.remove();
+        delete browserTabs[id];
+        return;
+      }
+      const tab = e.target.closest('.tab[data-panel]');
+      if (tab) activateTab(tab.dataset.panel);
+    });
+
+    document.getElementById('btn-newtab').addEventListener('click', () => newBrowserTab());
+    document.getElementById('btn-open-browser').addEventListener('click', () => newBrowserTab());
+
+    // ── Browser tab creation ─────────────────────────────────────
+    function newBrowserTab(startUrl) {
+      tabSeq++;
+      const id = `b${tabSeq}`;
+
+      // Tab button
+      const tabEl = document.createElement('div');
+      tabEl.className = 'tab';
+      tabEl.dataset.panel = id;
+      tabEl.innerHTML = `<span class="tab-icon"></span>
+        <span class="tab-title" id="ttitle-${id}">New Tab</span>
+        <button class="tab-x" data-id="${id}" title="Close">×</button>`;
+      document.getElementById('tab-bar').insertBefore(
+        tabEl, document.getElementById('btn-newtab'));
+
+      // Panel
+      const panelEl = document.createElement('div');
+      panelEl.className = 'tab-panel browser-panel';
+      panelEl.id = `panel-${id}`;
+      panelEl.innerHTML = `
+        <div class="b-toolbar">
+          <button class="b-btn" id="b-back-${id}" disabled>&#8592;</button>
+          <button class="b-btn" id="b-fwd-${id}"  disabled>&#8594;</button>
+          <button class="b-btn" id="b-ref-${id}">&#8635;</button>
+          <button class="b-btn" id="b-home-${id}">&#8962;</button>
+          <div class="b-sep"></div>
+          <div class="b-url-wrap">
+            <span class="b-scheme" id="b-scheme-${id}"></span>
+            <input class="b-url" id="b-url-${id}" type="text"
+                   placeholder="Search or enter a URL…" autocomplete="off" spellcheck="false"/>
+            <button class="b-go" id="b-go-${id}">Go</button>
+          </div>
+          <div class="b-sep"></div>
+          <button class="b-proxy-btn proxy-off" id="b-proxy-${id}"
+            title="Proxy not running — start it: node proxy.js">PROXY</button>
+        </div>
+        <div class="b-notice" id="b-notice-${id}" hidden>
+          <span id="b-nmsg-${id}"></span>
+          <button class="b-notice-open" id="b-nopen-${id}">Open in new tab ↗</button>
+          <button class="b-notice-x" id="b-nx-${id}">×</button>
+        </div>
+        <iframe class="b-iframe" id="b-frame-${id}"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation">
+        </iframe>`;
+      document.getElementById('tab-panels').appendChild(panelEl);
+
+      const state = { hist: [], histIdx: -1, currentUrl: '' };
+      browserTabs[id] = state;
+      activateTab(id);
+      wireBrowser(id, state);
+      if (startUrl) bNav(id, state, startUrl);
+      else bHome(id, state);
+    }
+
+    // ── Browser controls ─────────────────────────────────────────
+    function bProcessUrl(raw) {
+      const s = (raw || '').trim();
+      if (!s) return null;
+      if (/^https?:\/\//i.test(s)) return s;
+      if (/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(s)) return 'https://' + s;
+      return 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(s);
+    }
+
+    function bUpdateDisplay(id, state, url) {
+      const schemeEl = document.getElementById(`b-scheme-${id}`);
+      const urlEl    = document.getElementById(`b-url-${id}`);
+      const titleEl  = document.getElementById(`ttitle-${id}`);
+      try {
+        const u = new URL(url);
+        schemeEl.textContent = u.protocol === 'https:' ? '🔒' : '🔓';
+        urlEl.value = u.host + (u.pathname !== '/' ? u.pathname : '') + u.search;
+        if (titleEl) titleEl.textContent = u.hostname;
+      } catch {
+        schemeEl.textContent = ''; urlEl.value = url;
+      }
+    }
+
+    function bUpdateNavBtns(id, state) {
+      document.getElementById(`b-back-${id}`).disabled = state.histIdx <= 0;
+      document.getElementById(`b-fwd-${id}`).disabled  = state.histIdx >= state.hist.length - 1;
+    }
+
+    function bNav(id, state, url, push = true) {
+      if (!url) return;
+      state.currentUrl = url;
+      const tabEl = document.querySelector(`.tab[data-panel="${id}"]`);
+      if (tabEl) tabEl.classList.add('loading');
+      document.getElementById(`b-notice-${id}`).setAttribute('hidden', '');
+      if (push) {
+        state.hist.splice(state.histIdx + 1);
+        state.hist.push(url);
+        state.histIdx = state.hist.length - 1;
+      }
+      bUpdateDisplay(id, state, url);
+      bUpdateNavBtns(id, state);
+
+      const frame       = document.getElementById(`b-frame-${id}`);
+      const noticeEl    = document.getElementById(`b-notice-${id}`);
+      const noticeMsgEl = document.getElementById(`b-nmsg-${id}`);
+      document.getElementById(`b-nopen-${id}`).onclick = () => window.open(url, '_blank');
+
+      const useProxy = proxyState.ok && proxyState.on;
+      const navUrl   = useProxy ? proxyState.base + url : url;
+
+      let loaded = false;
+      frame.onload = () => {
+        loaded = true;
+        if (tabEl) tabEl.classList.remove('loading');
+        // When proxy is active, read the real URL from the iframe location
+        if (useProxy) {
+          try {
+            const loc = frame.contentWindow.location.href;
+            const absBase = location.origin + proxyState.base;
+            if (loc.startsWith(absBase)) {
+              const real = loc.slice(absBase.length);
+              if (real && real !== url && real !== 'about:blank') {
+                state.currentUrl = real;
+                if (state.hist[state.histIdx] === url) state.hist[state.histIdx] = real;
+                bUpdateDisplay(id, state, real);
+              }
+            }
+          } catch {}
+        }
+      };
+
+      if (!useProxy) {
+        setTimeout(() => {
+          if (!loaded) {
+            try { noticeMsgEl.textContent = `"${new URL(url).hostname}" blocks embedding. Enable the PROXY button to load any site.`; }
+            catch { noticeMsgEl.textContent = 'This page blocks embedding. Enable the PROXY button to load any site.'; }
+            noticeEl.removeAttribute('hidden');
+          }
+        }, 2800);
+      }
+
+      frame.removeAttribute('srcdoc');
+      frame.src = navUrl;
+    }
+
+    function bHome(id, state) {
+      state.currentUrl = '';
+      document.getElementById(`b-scheme-${id}`).textContent = '';
+      document.getElementById(`b-url-${id}`).value = '';
+      document.getElementById(`b-notice-${id}`).setAttribute('hidden', '');
+      const titleEl = document.getElementById(`ttitle-${id}`);
+      if (titleEl) titleEl.textContent = 'New Tab';
+
+      const theme   = localStorage.getItem('dashboard_theme') || 'default';
+      const ACCENT  = {ocean:'#06b6d4',meadow:'#22c55e',sunset:'#f97316',lavender:'#a855f7',rose:'#f43f5e',dark:'#f5c518'};
+      const BG      = {ocean:'#e8f4fb',meadow:'#e8f6ec',sunset:'#fdf0e8',lavender:'#f5eeff',rose:'#fdf0f3',dark:'#0e0e1e'};
+      const accent  = ACCENT[theme] || '#f5c518';
+      const bg      = BG[theme]     || '#f4f4f4';
+      const fg      = theme === 'dark' ? '#ddddf0' : '#1a1a1a';
+      const inputBg = theme === 'dark' ? '#1c1c2e' : '#ffffff';
+
+      const frame = document.getElementById(`b-frame-${id}`);
+      frame.removeAttribute('src');
+      frame.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:${bg};color:${fg};
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;gap:1.5rem;padding:2rem}
+h1{font-size:1.5rem;font-weight:800}h1 span{color:${accent}}
+form{display:flex;gap:.5rem;width:100%;max-width:500px}
+input{flex:1;padding:.6rem 1rem;border:2px solid #ccc;border-radius:8px;font-size:.95rem;
+  outline:none;background:${inputBg};color:${fg};transition:border-color .15s}
+input:focus{border-color:${accent}}
+button[type=submit]{padding:.6rem 1.1rem;background:${accent};border:none;border-radius:8px;
+  font-weight:700;font-size:.9rem;cursor:pointer;color:#111;white-space:nowrap}
+.links{display:flex;flex-wrap:wrap;gap:.45rem;justify-content:center;max-width:500px}
+.lnk{padding:.3rem .85rem;border:1.5px solid #ccc;border-radius:999px;
+  font-size:.8rem;cursor:pointer;background:transparent;color:${fg};transition:border-color .15s}
+.lnk:hover{border-color:${accent}}
+</style></head><body>
+<h1>&#127760; <span>Browser</span></h1>
+<form id="f"><input id="q" placeholder="Search or enter a URL…" autofocus autocomplete="off"/>
+<button type="submit">Go</button></form>
+<div class="links">
+  <button class="lnk" data-u="https://html.duckduckgo.com/html/">DuckDuckGo</button>
+  <button class="lnk" data-u="https://en.wikipedia.org/wiki/Main_Page">Wikipedia</button>
+  <button class="lnk" data-u="https://news.ycombinator.com">Hacker News</button>
+  <button class="lnk" data-u="https://github.com">GitHub</button>
+  <button class="lnk" data-u="https://www.reddit.com">Reddit</button>
+  <button class="lnk" data-u="https://www.bbc.com/news">BBC News</button>
+</div>
+<script>
+var TID="${id}";
+function send(u){window.parent.postMessage({type:"bnav",url:u,tid:TID},"*");}
+document.getElementById("f").addEventListener("submit",function(e){
+  e.preventDefault();
+  var q=document.getElementById("q").value.trim();if(!q)return;
+  var url;
+  if(/^https?:\\/\\//i.test(q))url=q;
+  else if(/^[\\w.-]+\\.\\w+/.test(q))url="https://"+q;
+  else url="https://html.duckduckgo.com/html/?q="+encodeURIComponent(q);
+  send(url);
+});
+document.querySelectorAll(".lnk").forEach(function(b){b.addEventListener("click",function(){send(b.dataset.u);});});
+<\/script></body></html>`;
+    }
+
+    function wireBrowser(id, state) {
+      const urlEl  = document.getElementById(`b-url-${id}`);
+      const frame  = document.getElementById(`b-frame-${id}`);
+
+      document.getElementById(`b-go-${id}`).addEventListener('click', () => {
+        const u = bProcessUrl(urlEl.value); if (u) bNav(id, state, u);
+      });
+      urlEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { const u = bProcessUrl(urlEl.value); if (u) bNav(id, state, u); }
+      });
+      urlEl.addEventListener('focus', () => { if (state.currentUrl) urlEl.value = state.currentUrl; });
+      urlEl.addEventListener('blur',  () => { if (state.currentUrl) bUpdateDisplay(id, state, state.currentUrl); });
+
+      document.getElementById(`b-back-${id}`).addEventListener('click', () => {
+        if (state.histIdx > 0) { state.histIdx--; bNav(id, state, state.hist[state.histIdx], false); }
+      });
+      document.getElementById(`b-fwd-${id}`).addEventListener('click', () => {
+        if (state.histIdx < state.hist.length-1) { state.histIdx++; bNav(id, state, state.hist[state.histIdx], false); }
+      });
+      document.getElementById(`b-ref-${id}`).addEventListener('click', () => {
+        if (state.currentUrl) bNav(id, state, state.currentUrl, false); else bHome(id, state);
+      });
+      document.getElementById(`b-home-${id}`).addEventListener('click', () => bHome(id, state));
+      document.getElementById(`b-nx-${id}`).addEventListener('click', () => {
+        document.getElementById(`b-notice-${id}`).setAttribute('hidden', '');
+      });
+
+      document.getElementById(`b-proxy-${id}`).addEventListener('click', () => {
+        if (!proxyState.ok) {
+          alert('The proxy only works when the dashboard is served by the local server.\n\nIn a terminal, run:\n\n  node server.js\n\nthen open  http://localhost:3000');
+          return;
+        }
+        proxyState.on = !proxyState.on;
+        syncProxyBtns();
+        if (state.currentUrl) bNav(id, state, state.currentUrl, false);
+        else bHome(id, state);
+      });
+
+      // Reflect current proxy state on this new tab immediately
+      syncProxyBtns();
+    }
+
+    // postMessage relay from home page srcdoc
+    window.addEventListener('message', e => {
+      if (e.data?.type === 'bnav' && e.data.tid && browserTabs[e.data.tid])
+        bNav(e.data.tid, browserTabs[e.data.tid], e.data.url);
+    });
+
+    // ════════════════════════════════════════════════════════════
+    // Today's schedule
+    // ════════════════════════════════════════════════════════════
+    (function () {
+      const now  = new Date();
+      const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+      const key  = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const all  = JSON.parse(localStorage.getItem('cal_items') || '{}');
+      const itms = (all[key] || []).slice().sort((a,b) => (a.time||'').localeCompare(b.time||''));
+      const DAY  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      document.getElementById('today-heading').textContent =
+        `Today — ${DAY[now.getDay()]}, ${now.toLocaleDateString('en-US',{month:'long',day:'numeric'})}`;
+      const list = document.getElementById('today-list');
+      if (!itms.length) {
+        list.innerHTML = `<li class="today-item"><span class="today-empty">Nothing on your schedule today.</span></li>`;
+      } else {
+        itms.forEach(item => {
+          const li = document.createElement('li');
+          li.className = 'today-item';
+          const ts = item.time ? (() => {
+            const [hh,mm] = item.time.split(':').map(Number);
+            return `${hh%12||12}:${String(mm).padStart(2,'0')} ${hh<12?'AM':'PM'}`;
+          })() : 'All day';
+          li.innerHTML = `<span class="today-time">${ts}</span>
+            <span class="today-text">${item.text}</span>
+            <span class="today-badge ${item.type}">${item.type}</span>`;
+          list.appendChild(li);
+        });
+      }
+      list.insertAdjacentHTML('afterend', '<a class="today-add-link" href="calendar.html">+ Add to today\'s calendar</a>');
+    })();
+
+    // ════════════════════════════════════════════════════════════
+    // LLM panel
+    // ════════════════════════════════════════════════════════════
+    const LLM_URLS = {
+      claude:'https://claude.ai', chatgpt:'https://chatgpt.com',
+      gemini:'https://gemini.google.com', perplexity:'https://perplexity.ai',
+      grok:'https://grok.com', copilot:'https://copilot.microsoft.com'
+    };
+
+    const titleEl  = document.getElementById('llm-title');
+    const editBtn  = document.getElementById('llm-edit-btn');
+    titleEl.textContent = localStorage.getItem('llm_title') || 'AI Assistant';
+
+    editBtn.addEventListener('click', () => {
+      const cur = titleEl.textContent;
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.className = 'llm-title-input'; inp.value = cur;
+      titleEl.replaceWith(inp); inp.focus(); inp.select();
+      function commit() {
+        const v = inp.value.trim() || 'AI Assistant';
+        localStorage.setItem('llm_title', v);
+        const s = document.createElement('span');
+        s.className = 'llm-title'; s.id = 'llm-title'; s.textContent = v;
+        inp.replaceWith(s);
+      }
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  { e.preventDefault(); commit(); }
+        if (e.key === 'Escape') {
+          const s = document.createElement('span');
+          s.className = 'llm-title'; s.id = 'llm-title'; s.textContent = cur;
+          inp.replaceWith(s);
+        }
+      });
+    });
+
+    const sel      = document.getElementById('llm-select');
+    const fwrap    = document.getElementById('llm-frame-wrap');
+    const ntlink   = document.getElementById('llm-newtab');
+    const lastLLM  = localStorage.getItem('llm_selected');
+    if (lastLLM) sel.value = lastLLM;
+
+    sel.addEventListener('change', function() {
+      const k = this.value; if (!k) return;
+      localStorage.setItem('llm_selected', k);
+      loadLLM(this.options[this.selectedIndex].text, LLM_URLS[k]);
+    });
+
+    function loadLLM(name, url) {
+      ntlink.href = url; ntlink.textContent = `Open ${name} in new tab ↗`; ntlink.style.display = 'inline';
+      fwrap.innerHTML = '';
+      const frame = document.createElement('iframe');
+      frame.className = 'llm-frame'; frame.title = name;
+      frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+      let loaded = false;
+      frame.addEventListener('load', () => { loaded = true; });
+      setTimeout(() => {
+        if (!loaded) {
+          fwrap.innerHTML = '';
+          fwrap.insertAdjacentHTML('beforeend', `<div class="llm-blocked">
+            <div class="llm-blocked-icon">🤖</div>
+            <div class="llm-blocked-msg"><strong>${name}</strong> doesn't allow embedding.<br/>Open it directly to chat.</div>
+            <a class="llm-open-btn" href="${url}" target="_blank" rel="noopener">Open ${name} ↗</a>
+          </div>`);
+        }
+      }, 2500);
+      frame.src = url;
+      fwrap.appendChild(frame);
+    }
+
+    if (lastLLM && LLM_URLS[lastLLM])
+      loadLLM(sel.options[sel.selectedIndex].text, LLM_URLS[lastLLM]);
+  </script>
+</body>
+</html>

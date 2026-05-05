@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendar — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/theme.js"></script>
+  <style>
+    /* ── Toolbar ───────────────────────────────────────────────── */
+    .cal-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 0.75rem; gap: 1rem; flex-wrap: wrap;
+    }
+    .view-toggle {
+      display: flex; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .view-btn {
+      padding: 0.3rem 0.9rem; border: none; background: #fff;
+      cursor: pointer; font-size: 0.85rem; transition: background 0.15s;
+      border-right: 1px solid var(--gray-200);
+    }
+    .view-btn:last-child { border-right: none; }
+    .view-btn.active { background: var(--yellow-400); font-weight: 700; }
+    .view-btn:hover:not(.active) { background: var(--yellow-100); }
+    .cal-nav-area { display: flex; align-items: center; gap: 0.75rem; }
+    .cal-nav { display: flex; gap: 0.4rem; }
+    .cal-nav button {
+      background: var(--gray-200); border: none; border-radius: var(--radius);
+      padding: 0.3rem 0.7rem; cursor: pointer; font-size: 0.85rem;
+      transition: background 0.15s;
+    }
+    .cal-nav button:hover { background: var(--yellow-400); }
+    .cal-range { font-weight: 700; font-size: 1rem; min-width: 220px; text-align: center; }
+
+    /* ── Shared add button ─────────────────────────────────────── */
+    .cal-add-btn {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 1.5px solid #ccc; background: #fff; color: #aaa;
+      font-size: 14px; line-height: 1; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+      padding: 0; flex-shrink: 0;
+    }
+    .cal-add-btn:hover { background: var(--yellow-400); border-color: var(--yellow-400); color: var(--gray-900); }
+
+    /* ── Shared chips ──────────────────────────────────────────── */
+    .cal-chip {
+      font-size: 0.65rem; padding: 1px 5px; border-radius: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .cal-chip.task    { background: #e3f2fd; color: #1565c0; }
+    .cal-chip.reminder{ background: var(--yellow-100); color: #7a5900; }
+    .cal-chip.event   { background: #f3e5f5; color: #6a1b9a; }
+
+    /* ── Month view ────────────────────────────────────────────── */
+    .cal-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      border-top: 1px solid #d4d4d4; border-left: 1px solid #d4d4d4;
+    }
+    .cal-day-name {
+      text-align: center; font-size: 0.7rem; font-weight: 600;
+      color: var(--text-secondary); text-transform: uppercase; padding: 0.4rem 0;
+      border-right: 1px solid #d4d4d4; border-bottom: 1px solid #d4d4d4;
+      background: var(--gray-100);
+    }
+    .cal-day {
+      position: relative; min-height: 80px; padding: 5px 6px 4px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      align-items: flex-start; border-right: 1px solid #d4d4d4;
+      border-bottom: 1px solid #d4d4d4; background: #fff; cursor: default;
+      transition: background 0.1s;
+    }
+    .cal-day:hover { background: #fafafa; }
+    .cal-day.today  { background: var(--yellow-100); }
+    .cal-day.other-month { background: #f6f6f6; }
+    .cal-day:hover .cal-add-btn { opacity: 1; }
+    .cal-day .cal-add-btn { align-self: flex-end; }
+    .cal-day-num {
+      font-size: 0.82rem; font-weight: 500; color: var(--text-primary); line-height: 1;
+    }
+    .cal-day.today .cal-day-num {
+      background: var(--yellow-400); color: var(--gray-900); font-weight: 700;
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cal-day.other-month .cal-day-num { color: #bbb; }
+    .cal-chips { display: flex; flex-direction: column; gap: 2px; width: 100%; margin-top: 3px; }
+    .cal-chips .cal-chip { max-width: 100%; }
+
+    /* ── Week / Day views ──────────────────────────────────────── */
+    .wk-wrap {
+      border: 1px solid #d4d4d4; border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden;
+    }
+    .wk-head {
+      display: grid; border-bottom: 2px solid #d4d4d4;
+      background: var(--gray-100);
+    }
+    .wk-gutter { border-right: 1px solid #d4d4d4; }
+    .wk-day-head {
+      text-align: center; padding: 6px 4px;
+      border-right: 1px solid #d4d4d4;
+    }
+    .wk-day-head:last-child { border-right: none; }
+    .wk-day-name {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .wk-day-num { font-size: 1.1rem; font-weight: 700; color: var(--gray-900); line-height: 1.3; }
+    .wk-day-head.today .wk-day-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--yellow-400); color: var(--gray-900);
+    }
+    .allday-row {
+      display: grid; border-bottom: 2px solid #d4d4d4; min-height: 28px;
+    }
+    .allday-label {
+      font-size: 0.6rem; color: var(--gray-400); text-align: right;
+      padding: 5px 6px 4px 0; border-right: 1px solid #d4d4d4; line-height: 1.2;
+    }
+    .allday-cell {
+      border-right: 1px solid #d4d4d4; padding: 3px 4px;
+      display: flex; flex-wrap: wrap; gap: 2px; align-items: flex-start;
+      min-height: 26px; position: relative; transition: background 0.1s;
+    }
+    .allday-cell:last-child { border-right: none; }
+    .allday-cell:hover { background: #fafafa; }
+    .allday-cell:hover .cal-add-btn { opacity: 1; }
+    .allday-cell .cal-add-btn {
+      position: absolute; bottom: 3px; right: 3px;
+      width: 16px; height: 16px; font-size: 11px;
+    }
+    .time-grid-wrap { max-height: 480px; overflow-y: auto; }
+    .time-row { display: grid; }
+    .time-label {
+      font-size: 0.62rem; color: var(--gray-400); text-align: right;
+      padding: 3px 6px 0 0; border-right: 1px solid #d4d4d4; line-height: 1;
+    }
+    .time-cell {
+      border-right: 1px solid #d4d4d4; border-bottom: 1px solid #eee;
+      min-height: 44px; padding: 2px 4px;
+      display: flex; flex-direction: column; gap: 2px;
+      position: relative; transition: background 0.1s;
+    }
+    .time-cell:last-child { border-right: none; }
+    .time-cell:hover { background: #fafafa; }
+    .time-cell.today-col { background: #fffdf0; }
+    .time-cell:hover .cal-add-btn { opacity: 1; }
+    .time-cell .cal-add-btn {
+      position: absolute; bottom: 3px; right: 3px;
+      width: 18px; height: 18px; font-size: 12px;
+    }
+
+    /* ── Modal ─────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+      display: flex; align-items: center; justify-content: center; z-index: 200;
+    }
+    .modal-overlay[hidden] { display: none; }
+    .modal {
+      background: #fff; border-radius: var(--radius); padding: 1.5rem;
+      width: 340px; max-width: 90vw;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .modal-title { font-size: 1rem; font-weight: 700; }
+    .modal-title span { color: var(--gray-600); font-weight: 500; }
+    .modal-type { display: flex; gap: 1.5rem; }
+    .modal-type label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; cursor: pointer; }
+    .modal-type input[type="radio"] { accent-color: var(--yellow-400); }
+    .modal .field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .modal .field label {
+      font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--text-secondary);
+    }
+    .modal .field input {
+      padding: 0.55rem 0.75rem; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); font-size: 0.9rem; outline: none;
+      transition: border-color 0.15s;
+    }
+    .modal .field input:focus { border-color: var(--yellow-400); }
+    .modal-actions { display: flex; gap: 0.75rem; }
+    .btn-save {
+      padding: 0.55rem 1.25rem; background: var(--yellow-400); border: none;
+      border-radius: var(--radius); font-weight: 700; font-size: 0.9rem;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-save:hover { background: var(--yellow-300); }
+    .btn-cancel {
+      padding: 0.55rem 1.25rem; background: var(--gray-200); border: none;
+      border-radius: var(--radius); font-size: 0.9rem; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-cancel:hover { background: var(--gray-400); color: #fff; }
+
+    /* ── Upcoming ──────────────────────────────────────────────── */
+    .event-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .event-item {
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem;
+      background: var(--gray-100); border-radius: var(--radius);
+      border-left: 3px solid var(--yellow-400); font-size: 0.9rem;
+    }
+    .event-time { font-size: 0.75rem; color: var(--gray-400); min-width: 70px; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1 class="header-title">Dashboard</h1>
+    <nav class="header-nav">
+      <a href="index.html">Home</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="tasks.html">Tasks</a></li>
+        <li><a href="messages.html">Messages</a></li>
+        <li><a href="calendar.html" class="active">Calendar</a></li>
+      </ul>
+    </aside>
+
+    <section class="content">
+      <div class="panel">
+        <div class="cal-toolbar">
+          <div class="view-toggle">
+            <button class="view-btn active" data-view="month">Month</button>
+            <button class="view-btn" data-view="week">Week</button>
+            <button class="view-btn" data-view="day">Day</button>
+          </div>
+          <span class="cal-range" id="cal-range"></span>
+          <div class="cal-nav-area">
+            <div class="cal-nav">
+              <button id="cal-prev">&#8592;</button>
+              <button id="cal-today">Today</button>
+              <button id="cal-next">&#8594;</button>
+            </div>
+          </div>
+        </div>
+        <div id="cal-body"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Upcoming Events</h2>
+        <ul class="event-list" id="upcoming-list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <!-- Add item modal -->
+  <div class="modal-overlay" id="modal" hidden>
+    <div class="modal">
+      <div class="modal-title">Add to <span id="modal-date-label"></span></div>
+      <div class="modal-type">
+        <label><input type="radio" name="item-type" value="task" checked> Task</label>
+        <label><input type="radio" name="item-type" value="reminder"> Reminder</label>
+        <label><input type="radio" name="item-type" value="event"> Event</label>
+      </div>
+      <div class="field">
+        <label>Title</label>
+        <input type="text" id="modal-text" placeholder="What do you need to do?" />
+      </div>
+      <div class="field">
+        <label>Time (optional)</label>
+        <input type="time" id="modal-time" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-save" id="modal-save">Add</button>
+        <button class="btn-cancel" id="modal-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    const monthNames  = ['January','February','March','April','May','June',
+                         'July','August','September','October','November','December'];
+    const dayNames    = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const dayNamesShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    let currentView = 'month';
+    let view = new Date();
+    const items = JSON.parse(localStorage.getItem('cal_items') || '{}');
+
+    function saveItems() {
+      localStorage.setItem('cal_items', JSON.stringify(items));
+    }
+
+    // ── Utilities ──────────────────────────────────────────────
+    function dateKey(y, m, d) {
+      return `${y}-${String(m + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
+    function formatHour(h) {
+      if (h === 0)  return '12 AM';
+      if (h < 12)   return `${h} AM`;
+      if (h === 12) return '12 PM';
+      return `${h - 12} PM`;
+    }
+    function getWeekStart(date) {
+      const d = new Date(date);
+      d.setDate(d.getDate() - d.getDay());
+      return d;
+    }
+    function todayKey() {
+      const t = new Date();
+      return dateKey(t.getFullYear(), t.getMonth(), t.getDate());
+    }
+
+    // ── Navigation label ────────────────────────────────────────
+    function updateNavLabel() {
+      const el = document.getElementById('cal-range');
+      if (currentView === 'month') {
+        el.textContent = `${monthNames[view.getMonth()]} ${view.getFullYear()}`;
+      } else if (currentView === 'week') {
+        const ws = getWeekStart(new Date(view));
+        const we = new Date(ws); we.setDate(we.getDate() + 6);
+        if (ws.getMonth() === we.getMonth()) {
+          el.textContent = `${monthNames[ws.getMonth()]} ${ws.getDate()}–${we.getDate()}, ${ws.getFullYear()}`;
+        } else if (ws.getFullYear() === we.getFullYear()) {
+          el.textContent = `${monthNames[ws.getMonth()].slice(0,3)} ${ws.getDate()} – ${monthNames[we.getMonth()].slice(0,3)} ${we.getDate()}, ${ws.getFullYear()}`;
+        } else {
+          el.textContent = `${monthNames[ws.getMonth()].slice(0,3)} ${ws.getDate()}, ${ws.getFullYear()} – ${monthNames[we.getMonth()].slice(0,3)} ${we.getDate()}, ${we.getFullYear()}`;
+        }
+      } else {
+        el.textContent = `${dayNames[view.getDay()]}, ${monthNames[view.getMonth()]} ${view.getDate()}, ${view.getFullYear()}`;
+      }
+    }
+
+    // ── Month view ──────────────────────────────────────────────
+    function renderMonth(container) {
+      const tk = todayKey();
+      const today = new Date();
+      const y = view.getFullYear(), m = view.getMonth();
+
+      const grid = document.createElement('div');
+      grid.className = 'cal-grid';
+
+      dayNamesShort.forEach(n => {
+        const el = document.createElement('div');
+        el.className = 'cal-day-name';
+        el.textContent = n;
+        grid.appendChild(el);
+      });
+
+      const first = new Date(y, m, 1).getDay();
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+      const daysInPrev  = new Date(y, m, 0).getDate();
+
+      function makeCell(dayNum, cls, ky, km, kd) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-day' + (cls ? ' ' + cls : '');
+
+        const numEl = document.createElement('div');
+        numEl.className = 'cal-day-num';
+        numEl.textContent = dayNum;
+        cell.appendChild(numEl);
+
+        if (kd !== undefined) {
+          const key = dateKey(ky, km, kd);
+          const dayItems = items[key] || [];
+          if (dayItems.length) {
+            const chips = document.createElement('div');
+            chips.className = 'cal-chips';
+            dayItems.forEach(item => {
+              const chip = document.createElement('div');
+              chip.className = `cal-chip ${item.type}`;
+              chip.textContent = (item.time ? item.time + ' ' : '') + item.text;
+              chips.appendChild(chip);
+            });
+            cell.appendChild(chips);
+          }
+          const btn = makeAddBtn(() => openModal(ky, km, kd));
+          cell.appendChild(btn);
+        }
+        return cell;
+      }
+
+      for (let i = 0; i < first; i++)
+        grid.appendChild(makeCell(daysInPrev - first + 1 + i, 'other-month'));
+      for (let d = 1; d <= daysInMonth; d++) {
+        const isToday = dateKey(y, m, d) === tk;
+        grid.appendChild(makeCell(d, isToday ? 'today' : '', y, m, d));
+      }
+      const remaining = (7 - ((first + daysInMonth) % 7)) % 7;
+      for (let i = 1; i <= remaining; i++)
+        grid.appendChild(makeCell(i, 'other-month'));
+
+      container.appendChild(grid);
+    }
+
+    // ── Week / Day views ────────────────────────────────────────
+    function renderWeek(container) {
+      const ws = getWeekStart(new Date(view));
+      const dates = Array.from({length: 7}, (_, i) => {
+        const d = new Date(ws); d.setDate(d.getDate() + i); return d;
+      });
+      renderTimeGridView(container, dates);
+    }
+
+    function renderDay(container) {
+      renderTimeGridView(container, [new Date(view)]);
+    }
+
+    function renderTimeGridView(container, dates) {
+      const tk = todayKey();
+      const cols = `52px repeat(${dates.length}, 1fr)`;
+      const wrap = document.createElement('div');
+      wrap.className = 'wk-wrap';
+
+      // Day header row
+      const head = document.createElement('div');
+      head.className = 'wk-head';
+      head.style.gridTemplateColumns = cols;
+      const gutter = document.createElement('div');
+      gutter.className = 'wk-gutter';
+      head.appendChild(gutter);
+      dates.forEach(date => {
+        const key = dateKey(date.getFullYear(), date.getMonth(), date.getDate());
+        const th = document.createElement('div');
+        th.className = 'wk-day-head' + (key === tk ? ' today' : '');
+        th.innerHTML = `<div class="wk-day-name">${dayNamesShort[date.getDay()]}</div>
+                        <div class="wk-day-num">${date.getDate()}</div>`;
+        head.appendChild(th);
+      });
+      wrap.appendChild(head);
+
+      // All-day row
+      const alldayRow = document.createElement('div');
+      alldayRow.className = 'allday-row';
+      alldayRow.style.gridTemplateColumns = cols;
+      const alldayLabel = document.createElement('div');
+      alldayLabel.className = 'allday-label';
+      alldayLabel.textContent = 'all-day';
+      alldayRow.appendChild(alldayLabel);
+      dates.forEach(date => {
+        const key = dateKey(date.getFullYear(), date.getMonth(), date.getDate());
+        const cell = document.createElement('div');
+        cell.className = 'allday-cell';
+        (items[key] || []).filter(i => !i.time).forEach(item => {
+          const chip = document.createElement('div');
+          chip.className = `cal-chip ${item.type}`;
+          chip.textContent = item.text;
+          cell.appendChild(chip);
+        });
+        const btn = makeAddBtn(() => openModal(date.getFullYear(), date.getMonth(), date.getDate(), ''));
+        cell.appendChild(btn);
+        alldayRow.appendChild(cell);
+      });
+      wrap.appendChild(alldayRow);
+
+      // Time rows
+      const timeWrap = document.createElement('div');
+      timeWrap.className = 'time-grid-wrap';
+      for (let h = 0; h < 24; h++) {
+        const row = document.createElement('div');
+        row.className = 'time-row';
+        row.style.gridTemplateColumns = cols;
+        const label = document.createElement('div');
+        label.className = 'time-label';
+        label.textContent = formatHour(h);
+        row.appendChild(label);
+        dates.forEach(date => {
+          const key = dateKey(date.getFullYear(), date.getMonth(), date.getDate());
+          const cell = document.createElement('div');
+          cell.className = 'time-cell' + (key === tk ? ' today-col' : '');
+          const prefix = `${String(h).padStart(2,'0')}:`;
+          (items[key] || []).filter(i => i.time && i.time.startsWith(prefix)).forEach(item => {
+            const chip = document.createElement('div');
+            chip.className = `cal-chip ${item.type}`;
+            chip.textContent = `${item.time} ${item.text}`;
+            cell.appendChild(chip);
+          });
+          const t = `${String(h).padStart(2,'0')}:00`;
+          const btn = makeAddBtn(() => openModal(date.getFullYear(), date.getMonth(), date.getDate(), t));
+          cell.appendChild(btn);
+          row.appendChild(cell);
+        });
+        timeWrap.appendChild(row);
+      }
+      wrap.appendChild(timeWrap);
+      container.appendChild(wrap);
+
+      // Scroll to current hour
+      requestAnimationFrame(() => {
+        timeWrap.scrollTop = Math.max(0, new Date().getHours() - 1) * 44;
+      });
+    }
+
+    // ── Helper: add button ──────────────────────────────────────
+    function makeAddBtn(onClick) {
+      const btn = document.createElement('button');
+      btn.className = 'cal-add-btn';
+      btn.title = 'Add item';
+      btn.textContent = '+';
+      btn.addEventListener('click', e => { e.stopPropagation(); onClick(); });
+      return btn;
+    }
+
+    // ── Main render ─────────────────────────────────────────────
+    function renderView() {
+      const body = document.getElementById('cal-body');
+      body.innerHTML = '';
+      if (currentView === 'month')     renderMonth(body);
+      else if (currentView === 'week') renderWeek(body);
+      else                             renderDay(body);
+      updateNavLabel();
+    }
+
+    // ── View toggle ─────────────────────────────────────────────
+    document.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentView = btn.dataset.view;
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderView();
+      });
+    });
+
+    // ── Navigation ──────────────────────────────────────────────
+    function navigate(dir) {
+      const d = new Date(view);
+      if      (currentView === 'month') d.setMonth(d.getMonth() + dir);
+      else if (currentView === 'week')  d.setDate(d.getDate() + dir * 7);
+      else                              d.setDate(d.getDate() + dir);
+      view = d;
+      renderView();
+    }
+    document.getElementById('cal-prev').addEventListener('click', () => navigate(-1));
+    document.getElementById('cal-next').addEventListener('click', () => navigate(1));
+    document.getElementById('cal-today').addEventListener('click', () => { view = new Date(); renderView(); });
+
+    // ── Modal ────────────────────────────────────────────────────
+    let modalTarget = null;
+
+    function openModal(y, m, d, time) {
+      modalTarget = { y, m, d };
+      document.getElementById('modal-date-label').textContent =
+        `${monthNames[m]} ${d}, ${y}`;
+      document.getElementById('modal-text').value = '';
+      document.getElementById('modal-time').value = time !== undefined ? time : '';
+      document.querySelector('input[name="item-type"][value="task"]').checked = true;
+      document.getElementById('modal').removeAttribute('hidden');
+      document.getElementById('modal-text').focus();
+    }
+
+    function closeModal() {
+      document.getElementById('modal').setAttribute('hidden', '');
+      modalTarget = null;
+    }
+
+    document.getElementById('modal-save').addEventListener('click', () => {
+      const text = document.getElementById('modal-text').value.trim();
+      if (!text || !modalTarget) return;
+      const { y, m, d } = modalTarget;
+      const key  = dateKey(y, m, d);
+      const type = document.querySelector('input[name="item-type"]:checked').value;
+      const time = document.getElementById('modal-time').value;
+      if (!items[key]) items[key] = [];
+      items[key].push({ text, type, time });
+      saveItems();
+      closeModal();
+      renderView();
+      renderUpcoming();
+    });
+
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // ── Upcoming events ──────────────────────────────────────────
+    function renderUpcoming() {
+      const list = document.getElementById('upcoming-list');
+      const today = new Date(); today.setHours(0,0,0,0);
+      const entries = [];
+      Object.entries(items).forEach(([key, dayItems]) => {
+        const [ky, km, kd] = key.split('-').map(Number);
+        const date = new Date(ky, km - 1, kd);
+        if (date >= today) dayItems.forEach(item => entries.push({ date, ...item }));
+      });
+      entries.sort((a, b) => a.date - b.date || (a.time || '').localeCompare(b.time || ''));
+      list.innerHTML = '';
+      if (!entries.length) {
+        list.innerHTML = '<li class="event-item"><span class="event-time">—</span>Nothing scheduled yet.</li>';
+        return;
+      }
+      entries.slice(0, 8).forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'event-item';
+        const d = item.date;
+        const dateStr = `${monthNames[d.getMonth()].slice(0,3)} ${d.getDate()}`;
+        li.innerHTML = `<span class="event-time">${item.time || dateStr}</span>
+          ${item.text}
+          <span style="margin-left:auto;font-size:0.7rem;color:var(--gray-400)">${item.type}</span>`;
+        list.appendChild(li);
+      });
+    }
+
+    renderView();
+    renderUpcoming();
+  </script>
+</body>
+</html>

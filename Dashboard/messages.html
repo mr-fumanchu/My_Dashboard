@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Messages — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/theme.js"></script>
+  <style>
+    /* ── Override content to be a mail-client layout ───────────── */
+    .content {
+      flex-direction: row !important;
+      padding: 0 !important;
+      gap: 0 !important;
+      background: #0d0d0d !important;
+      align-items: stretch;
+    }
+
+    /* ── Mail sidebar ──────────────────────────────────────────── */
+    .mail-sidebar {
+      width: 230px;
+      flex-shrink: 0;
+      background: #141414;
+      border-right: 1px solid #2a2a2a;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .mail-compose-wrap {
+      padding: 1rem 1rem 0.75rem;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .mail-compose {
+      width: 100%;
+      padding: 0.55rem 0;
+      background: var(--yellow-400);
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 0.875rem;
+      cursor: pointer;
+      color: #111;
+      transition: background 0.15s;
+    }
+    .mail-compose:hover { background: var(--yellow-300); }
+
+    /* Account groups */
+    .mail-account-group { border-bottom: 1px solid #2a2a2a; }
+    .mail-account-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1rem 0.5rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .mail-account-header:hover { background: #252525; }
+    .mail-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--yellow-400);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.72rem; color: #111;
+      flex-shrink: 0;
+    }
+    .mail-acct-info { flex: 1; min-width: 0; }
+    .mail-acct-name {
+      font-weight: 700; font-size: 0.8rem; color: #e0e0e0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .mail-acct-addr {
+      font-size: 0.7rem; color: #666;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .mail-acct-chevron {
+      font-size: 0.65rem; color: #555; flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+    .mail-account-group.collapsed .mail-acct-chevron { transform: rotate(-90deg); }
+    .mail-account-group.collapsed .mail-folder-list { display: none; }
+
+    /* Folder list */
+    .mail-folder-list { list-style: none; padding: 0 0 0.5rem; }
+    .mail-folder-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 1rem 0.4rem 1.25rem;
+      font-size: 0.85rem; cursor: pointer;
+      color: #777;
+      border-left: 3px solid transparent;
+      transition: background 0.1s, color 0.1s;
+    }
+    .mail-folder-item:hover { background: #252525; color: #e0e0e0; }
+    .mail-folder-item.active {
+      background: rgba(245,197,24,0.12);
+      color: var(--yellow-300);
+      border-left-color: var(--yellow-400);
+      font-weight: 600;
+    }
+    .mail-folder-icon { font-size: 0.8rem; flex-shrink: 0; }
+    .mail-folder-name { flex: 1; }
+    .mail-folder-count {
+      font-size: 0.68rem; font-weight: 700;
+      background: var(--yellow-400); color: #111;
+      padding: 1px 6px; border-radius: 999px; flex-shrink: 0;
+    }
+
+    /* No accounts state */
+    .mail-no-accounts {
+      padding: 1.5rem 1rem;
+      font-size: 0.82rem;
+      color: #666;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .mail-no-accounts a { color: var(--yellow-400); }
+
+    /* ── Main mail panel ───────────────────────────────────────── */
+    .mail-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: #0d0d0d;
+    }
+    .mail-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+      gap: 1rem;
+    }
+    .mail-folder-label {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #e0e0e0;
+    }
+    .mail-toolbar-right { display: flex; gap: 0.5rem; }
+    .mail-btn {
+      padding: 0.3rem 0.7rem;
+      border: 1px solid #333;
+      border-radius: var(--radius);
+      background: #252525;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      color: #999;
+    }
+    .mail-btn:hover { background: #333; border-color: var(--yellow-400); color: #e0e0e0; }
+
+    /* Connection notice */
+    .mail-notice {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 1.25rem;
+      background: rgba(245,197,24,0.1);
+      border-bottom: 1px solid rgba(245,197,24,0.25);
+      font-size: 0.8rem;
+      color: var(--yellow-300);
+    }
+    .mail-notice a { color: var(--yellow-400); font-weight: 600; }
+    .mail-notice-close {
+      margin-left: auto;
+      background: none; border: none; cursor: pointer;
+      color: #666; font-size: 1rem; line-height: 1;
+    }
+
+    /* Message list */
+    .mail-list-wrap {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .mail-message-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid #1e1e1e;
+      cursor: pointer;
+      transition: background 0.1s;
+      background: #111;
+    }
+    .mail-message-item:hover { background: #1e1e1e; }
+    .mail-message-item.unread { background: #161616; }
+    .mail-message-item.unread .mail-msg-from { font-weight: 700; color: #e0e0e0; }
+    .mail-message-item.unread .mail-msg-subject { font-weight: 600; }
+    .mail-msg-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #2a2a2a;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; color: #888;
+      flex-shrink: 0;
+    }
+    .mail-msg-body { flex: 1; min-width: 0; }
+    .mail-msg-from { font-size: 0.875rem; color: #ccc; }
+    .mail-msg-subject {
+      font-size: 0.82rem; color: #888;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .mail-msg-preview {
+      font-size: 0.78rem; color: #555;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .mail-msg-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; flex-shrink: 0; }
+    .mail-msg-time { font-size: 0.72rem; color: #555; }
+    .mail-msg-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--yellow-400);
+    }
+
+    /* Empty / status states */
+    .mail-status {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    .mail-status-icon { font-size: 2.5rem; }
+    .mail-status-title { font-weight: 700; font-size: 1rem; color: #e0e0e0; }
+    .mail-status-msg { font-size: 0.85rem; color: #777; line-height: 1.6; max-width: 360px; }
+    .mail-status-msg a { color: var(--yellow-400); }
+    .mail-status-msg code {
+      background: #252525; color: #ccc; padding: 1px 5px; border-radius: 3px;
+      font-size: 0.82rem;
+    }
+
+    /* ── Right panel ───────────────────────────────────────────── */
+    .mail-right {
+      width: 260px;
+      flex-shrink: 0;
+      background: #141414;
+      border-left: 1px solid #2a2a2a;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    /* Mini calendar */
+    .mini-cal {
+      padding: 0.9rem 0.85rem 0.75rem;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .mini-cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .mini-cal-title { font-weight: 700; font-size: 0.82rem; color: #e0e0e0; }
+    .mini-cal-nav {
+      background: none; border: none; cursor: pointer;
+      font-size: 1rem; color: #555; padding: 0 0.2rem; line-height: 1;
+    }
+    .mini-cal-nav:hover { color: var(--yellow-400); }
+    .mini-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+    }
+    .mini-dayname {
+      text-align: center; font-size: 0.58rem; font-weight: 600;
+      color: #555; text-transform: uppercase; padding-bottom: 4px;
+    }
+    .mini-day {
+      display: flex; flex-direction: column;
+      align-items: center; padding: 1px 0;
+      cursor: pointer; border-radius: 4px;
+      transition: background 0.1s;
+    }
+    .mini-day:hover { background: #252525; }
+    .mini-daynum {
+      font-size: 0.72rem; line-height: 1.7;
+      width: 20px; text-align: center; border-radius: 50%;
+      color: #ccc;
+    }
+    .mini-day.today .mini-daynum {
+      background: var(--yellow-400); font-weight: 700; color: #111;
+    }
+    .mini-day.other-month .mini-daynum { color: #333; }
+    .mini-day-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--yellow-400); margin-top: 1px;
+    }
+
+    /* Week in review */
+    .week-review {
+      padding: 0.9rem 0.85rem;
+      flex: 1;
+    }
+    .week-review-title {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: #555;
+      margin-bottom: 0.75rem;
+    }
+    .week-day-group { margin-bottom: 0.65rem; }
+    .week-day-label {
+      font-size: 0.7rem; font-weight: 600; color: #666;
+      margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.3rem;
+    }
+    .week-day-label.is-today { color: var(--yellow-400); }
+    .week-day-items { display: flex; flex-direction: column; gap: 2px; }
+    .week-chip {
+      font-size: 0.67rem; padding: 1px 6px; border-radius: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .week-chip.task     { background: rgba(21,101,192,0.25); color: #90caf9; }
+    .week-chip.reminder { background: rgba(245,197,24,0.18); color: var(--yellow-300); }
+    .week-chip.event    { background: rgba(106,27,154,0.25); color: #ce93d8; }
+    .week-empty { font-size: 0.7rem; color: #444; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1 class="header-title">Dashboard</h1>
+    <nav class="header-nav">
+      <a href="index.html">Home</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="tasks.html">Tasks</a></li>
+        <li><a href="messages.html" class="active">Messages</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+      </ul>
+    </aside>
+
+    <section class="content">
+
+      <!-- ── Mail accounts sidebar ──────────────────────────────── -->
+      <div class="mail-sidebar" id="mail-sidebar">
+        <div class="mail-compose-wrap">
+          <button class="mail-compose">✏ Compose</button>
+        </div>
+        <div id="accounts-nav"></div>
+      </div>
+
+      <!-- ── Mail main area ─────────────────────────────────────── -->
+      <!-- ── Mail main area ─────────────────────────────────────── -->
+      <div class="mail-main" id="mail-main">
+        <div class="mail-toolbar">
+          <span class="mail-folder-label" id="folder-label">Inbox</span>
+          <div class="mail-toolbar-right">
+            <button class="mail-btn" id="btn-refresh">↻ Refresh</button>
+            <button class="mail-btn" id="btn-select-all">Select All</button>
+          </div>
+        </div>
+        <div id="mail-notice-wrap"></div>
+        <div class="mail-list-wrap" id="mail-list"></div>
+      </div>
+
+      <!-- ── Right panel: mini cal + week review ───────────────── -->
+      <div class="mail-right">
+
+        <div class="mini-cal">
+          <div class="mini-cal-header">
+            <button class="mini-cal-nav" id="mcal-prev">‹</button>
+            <span class="mini-cal-title" id="mcal-title"></span>
+            <button class="mini-cal-nav" id="mcal-next">›</button>
+          </div>
+          <div class="mini-cal-grid" id="mcal-grid"></div>
+        </div>
+
+        <div class="week-review">
+          <div class="week-review-title">This Week</div>
+          <div id="week-review-list"></div>
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    const FOLDERS = [
+      { key: 'inbox',   label: 'Inbox',   icon: '✉' },
+      { key: 'sent',    label: 'Sent',    icon: '↑' },
+      { key: 'drafts',  label: 'Drafts',  icon: '✏' },
+      { key: 'archive', label: 'Archive', icon: '🗂' },
+      { key: 'spam',    label: 'Spam',    icon: '⚠' },
+      { key: 'trash',   label: 'Trash',   icon: '🗑' },
+    ];
+
+    // Counts stored per account+folder for unread badge
+    const unreadCounts = {};
+
+    let activeAccount = null;
+    let activeFolder  = 'inbox';
+    let noticeDismissed = false;
+
+    // ── Load accounts from localStorage ─────────────────────────
+    const accounts = JSON.parse(localStorage.getItem('mail_accounts') || '[]');
+
+    // ── Build mail sidebar ───────────────────────────────────────
+    function buildSidebar() {
+      const nav = document.getElementById('accounts-nav');
+      nav.innerHTML = '';
+
+      if (!accounts.length) {
+        nav.innerHTML = `<div class="mail-no-accounts">
+          No mail accounts configured.<br/>
+          <a href="settings.html">Go to Settings → Mail</a> to add an account.
+        </div>`;
+        showNoAccounts();
+        return;
+      }
+
+      accounts.forEach((acc, idx) => {
+        const initials = acc.name.trim().split(/\s+/).map(w => w[0]).join('').slice(0,2).toUpperCase();
+        const group = document.createElement('div');
+        group.className = 'mail-account-group';
+        group.dataset.idx = idx;
+
+        const header = document.createElement('div');
+        header.className = 'mail-account-header';
+        header.innerHTML = `
+          <div class="mail-avatar">${initials}</div>
+          <div class="mail-acct-info">
+            <div class="mail-acct-name">${esc(acc.name)}</div>
+            <div class="mail-acct-addr">${esc(acc.email)}</div>
+          </div>
+          <span class="mail-acct-chevron">▾</span>`;
+        header.addEventListener('click', () => {
+          group.classList.toggle('collapsed');
+        });
+
+        const folderList = document.createElement('ul');
+        folderList.className = 'mail-folder-list';
+
+        FOLDERS.forEach(f => {
+          const li = document.createElement('li');
+          li.className = 'mail-folder-item';
+          li.dataset.acct = idx;
+          li.dataset.folder = f.key;
+          const countKey = `${idx}:${f.key}`;
+          const count = unreadCounts[countKey] || 0;
+          li.innerHTML = `
+            <span class="mail-folder-icon">${f.icon}</span>
+            <span class="mail-folder-name">${f.label}</span>
+            ${count > 0 ? `<span class="mail-folder-count">${count}</span>` : ''}`;
+          li.addEventListener('click', () => selectFolder(idx, f.key, f.label, li));
+          folderList.appendChild(li);
+        });
+
+        group.appendChild(header);
+        group.appendChild(folderList);
+        nav.appendChild(group);
+      });
+
+      // Auto-select first account inbox
+      const firstInbox = nav.querySelector('.mail-folder-item');
+      if (firstInbox) firstInbox.click();
+    }
+
+    // ── Select a folder ──────────────────────────────────────────
+    function selectFolder(acctIdx, folderKey, folderLabel, el) {
+      document.querySelectorAll('.mail-folder-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+      activeAccount = accounts[acctIdx];
+      activeFolder  = folderKey;
+
+      const acc = accounts[acctIdx];
+      document.getElementById('folder-label').textContent =
+        `${acc.name} — ${folderLabel}`;
+
+      fetchMessages(acc, folderKey);
+    }
+
+    // ── Fetch messages from backend (or show status) ─────────────
+    function fetchMessages(acc, folder) {
+      const list = document.getElementById('mail-list');
+      list.innerHTML = `<div class="mail-status">
+        <div class="mail-status-icon">⏳</div>
+        <div class="mail-status-title">Connecting…</div>
+      </div>`;
+
+      // Attempt to reach a local mail proxy on localhost:3001
+      const url = `http://localhost:3001/mail/${encodeURIComponent(acc.email)}/${folder}`;
+      fetch(url, { signal: AbortSignal.timeout(3000) })
+        .then(r => { if (!r.ok) throw new Error('bad response'); return r.json(); })
+        .then(data => renderMessages(data.messages || []))
+        .catch(() => showProxyRequired(acc, folder));
+    }
+
+    // ── Render messages returned by proxy ────────────────────────
+    function renderMessages(messages) {
+      const list = document.getElementById('mail-list');
+      list.innerHTML = '';
+      if (!messages.length) {
+        list.innerHTML = `<div class="mail-status">
+          <div class="mail-status-icon">📭</div>
+          <div class="mail-status-title">No messages</div>
+          <div class="mail-status-msg">This folder is empty.</div>
+        </div>`;
+        return;
+      }
+      messages.forEach(msg => {
+        const initials = (msg.from || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0,2).toUpperCase();
+        const item = document.createElement('div');
+        item.className = `mail-message-item${msg.unread ? ' unread' : ''}`;
+        item.innerHTML = `
+          <div class="mail-msg-avatar">${initials}</div>
+          <div class="mail-msg-body">
+            <div class="mail-msg-from">${esc(msg.from || '—')}</div>
+            <div class="mail-msg-subject">${esc(msg.subject || '(no subject)')}</div>
+            <div class="mail-msg-preview">${esc(msg.preview || '')}</div>
+          </div>
+          <div class="mail-msg-meta">
+            <span class="mail-msg-time">${esc(msg.date || '')}</span>
+            ${msg.unread ? '<span class="mail-msg-dot"></span>' : ''}
+          </div>`;
+        list.appendChild(item);
+      });
+    }
+
+    // ── Show proxy-required state ────────────────────────────────
+    function showProxyRequired(acc, folder) {
+      showNotice();
+      const list = document.getElementById('mail-list');
+      list.innerHTML = `<div class="mail-status">
+        <div class="mail-status-icon">📡</div>
+        <div class="mail-status-title">Mail proxy not running</div>
+        <div class="mail-status-msg">
+          Browsers cannot connect directly to IMAP servers. A lightweight local proxy is needed to bridge the connection.<br/><br/>
+          <strong>Quick setup (Node.js):</strong><br/>
+          <code>npx dashboard-mail-proxy</code><br/>
+          then refresh this page.<br/><br/>
+          Server: <strong>${esc(acc.incHost)}:${esc(acc.incPort)}</strong> &nbsp;·&nbsp;
+          Protocol: <strong>${esc(acc.incProto)}</strong>
+        </div>
+      </div>`;
+    }
+
+    // ── No accounts configured state ─────────────────────────────
+    function showNoAccounts() {
+      document.getElementById('mail-list').innerHTML = `<div class="mail-status">
+        <div class="mail-status-icon">📬</div>
+        <div class="mail-status-title">No accounts configured</div>
+        <div class="mail-status-msg">
+          Add a mail account in <a href="settings.html">Settings → Mail</a> to get started.
+        </div>
+      </div>`;
+    }
+
+    // ── Connection notice banner ─────────────────────────────────
+    function showNotice() {
+      if (noticeDismissed) return;
+      const wrap = document.getElementById('mail-notice-wrap');
+      if (wrap.innerHTML) return;
+      wrap.innerHTML = `<div class="mail-notice" id="mail-notice">
+        <span>ℹ</span>
+        <span>Live mail requires a local proxy server running on <strong>localhost:3001</strong>.
+        <a href="https://github.com" target="_blank" rel="noopener">Setup guide</a></span>
+        <button class="mail-notice-close" id="notice-close">×</button>
+      </div>`;
+      document.getElementById('notice-close').addEventListener('click', () => {
+        wrap.innerHTML = '';
+        noticeDismissed = true;
+      });
+    }
+
+    // ── Refresh button ───────────────────────────────────────────
+    document.getElementById('btn-refresh').addEventListener('click', () => {
+      if (activeAccount) fetchMessages(activeAccount, activeFolder);
+    });
+
+    // ── Escape helper ────────────────────────────────────────────
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ── Mini calendar ────────────────────────────────────────────
+    const MONTH_NAMES = ['January','February','March','April','May','June',
+                         'July','August','September','October','November','December'];
+    const calItems = JSON.parse(localStorage.getItem('cal_items') || '{}');
+    let mcalView = new Date();
+
+    function calKey(y, m, d) {
+      return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
+
+    function renderMiniCal() {
+      const today = new Date();
+      const y = mcalView.getFullYear(), m = mcalView.getMonth();
+      document.getElementById('mcal-title').textContent =
+        `${MONTH_NAMES[m].slice(0,3)} ${y}`;
+
+      const grid = document.getElementById('mcal-grid');
+      grid.innerHTML = '';
+
+      ['S','M','T','W','T','F','S'].forEach(n => {
+        const el = document.createElement('div');
+        el.className = 'mini-dayname';
+        el.textContent = n;
+        grid.appendChild(el);
+      });
+
+      const first       = new Date(y, m, 1).getDay();
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+      const daysInPrev  = new Date(y, m, 0).getDate();
+
+      for (let i = 0; i < first; i++) {
+        const el = document.createElement('div');
+        el.className = 'mini-day other-month';
+        el.innerHTML = `<span class="mini-daynum">${daysInPrev - first + 1 + i}</span>`;
+        grid.appendChild(el);
+      }
+      for (let d = 1; d <= daysInMonth; d++) {
+        const isToday = y === today.getFullYear() && m === today.getMonth() && d === today.getDate();
+        const key = calKey(y, m, d);
+        const hasItems = (calItems[key] || []).length > 0;
+        const el = document.createElement('div');
+        el.className = 'mini-day' + (isToday ? ' today' : '');
+        el.title = hasItems ? `${calItems[key].length} item(s)` : '';
+        el.innerHTML = `<span class="mini-daynum">${d}</span>
+          ${hasItems ? '<span class="mini-day-dot"></span>' : ''}`;
+        grid.appendChild(el);
+      }
+      const remaining = (7 - ((first + daysInMonth) % 7)) % 7;
+      for (let i = 1; i <= remaining; i++) {
+        const el = document.createElement('div');
+        el.className = 'mini-day other-month';
+        el.innerHTML = `<span class="mini-daynum">${i}</span>`;
+        grid.appendChild(el);
+      }
+    }
+
+    document.getElementById('mcal-prev').addEventListener('click', () => {
+      mcalView.setMonth(mcalView.getMonth() - 1); renderMiniCal();
+    });
+    document.getElementById('mcal-next').addEventListener('click', () => {
+      mcalView.setMonth(mcalView.getMonth() + 1); renderMiniCal();
+    });
+
+    // ── Week in review ───────────────────────────────────────────
+    function renderWeekReview() {
+      const today = new Date();
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay()); // Sunday
+
+      const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const container = document.getElementById('week-review-list');
+      container.innerHTML = '';
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        const key = calKey(d.getFullYear(), d.getMonth(), d.getDate());
+        const dayItems = calItems[key] || [];
+        const isToday = d.toDateString() === today.toDateString();
+
+        const group = document.createElement('div');
+        group.className = 'week-day-group';
+
+        const label = document.createElement('div');
+        label.className = 'week-day-label' + (isToday ? ' is-today' : '');
+        label.textContent = `${DAY_NAMES[d.getDay()]} ${d.getDate()}${isToday ? ' · today' : ''}`;
+        group.appendChild(label);
+
+        const itemsWrap = document.createElement('div');
+        itemsWrap.className = 'week-day-items';
+
+        if (!dayItems.length) {
+          const empty = document.createElement('div');
+          empty.className = 'week-empty';
+          empty.textContent = '—';
+          itemsWrap.appendChild(empty);
+        } else {
+          dayItems.forEach(item => {
+            const chip = document.createElement('div');
+            chip.className = `week-chip ${item.type}`;
+            chip.textContent = (item.time ? item.time + ' ' : '') + item.text;
+            chip.title = chip.textContent;
+            itemsWrap.appendChild(chip);
+          });
+        }
+
+        group.appendChild(itemsWrap);
+        container.appendChild(group);
+      }
+    }
+
+    renderMiniCal();
+    renderWeekReview();
+
+    buildSidebar();
+  </script>
+</body>
+</html>
