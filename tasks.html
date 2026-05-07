@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tasks — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/theme.js"></script>
+  <style>
+    .task-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .task-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.75rem 1rem; background: var(--bg);
+      border-radius: var(--radius); border-left: 3px solid var(--gray-400);
+      box-shadow: var(--shadow-raise-sm);
+    }
+    .task-item.done { opacity: 0.5; border-left-color: var(--yellow-400); }
+    .task-item input[type="checkbox"] { accent-color: var(--yellow-400); width: 16px; height: 16px; }
+    .task-label { font-size: 0.9rem; }
+    .task-item.done .task-label { text-decoration: line-through; color: var(--gray-400); }
+    .task-meta { font-size: 0.75rem; color: var(--gray-400); }
+    .task-del {
+      background: none; border: none; cursor: pointer; color: var(--gray-400);
+      font-size: 1.2rem; line-height: 1; padding: 0 4px; opacity: 0;
+      transition: opacity 0.15s, color 0.15s; margin-left: auto; flex-shrink: 0;
+    }
+    .task-item:hover .task-del { opacity: 1; }
+    .task-del:hover { color: #ef4444; }
+    .add-task-form {
+      display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+    }
+    .add-task-form input[type="text"] {
+      flex: 1; min-width: 160px;
+      padding: 0.5rem 0.75rem; border: none;
+      border-radius: var(--radius); font-size: 0.9rem; outline: none;
+      box-shadow: var(--shadow-inset-sm); transition: box-shadow 0.15s;
+      background: var(--bg); color: var(--text-primary);
+    }
+    .add-task-form input[type="text"]:focus {
+      box-shadow: var(--shadow-inset-sm), 0 0 0 2px var(--yellow-400);
+    }
+    .add-task-form input[type="date"] {
+      padding: 0.5rem 0.6rem; border: none;
+      border-radius: var(--radius); font-size: 0.85rem; outline: none;
+      background: var(--bg); color: var(--text-primary); cursor: pointer;
+      box-shadow: var(--shadow-inset-sm);
+    }
+    .add-task-form button {
+      padding: 0.5rem 1.1rem; background: var(--yellow-400); border: none;
+      border-radius: var(--radius); font-weight: 700; font-size: 0.9rem;
+      cursor: pointer; box-shadow: var(--shadow-raise-sm);
+      transition: box-shadow 0.15s, background 0.15s; flex-shrink: 0;
+    }
+    .add-task-form button:hover { background: var(--yellow-300); box-shadow: var(--shadow-inset-sm); }
+    .task-overdue { color: #ef4444 !important; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1 class="header-title">Dashboard</h1>
+    <nav class="header-nav">
+      <a href="index.html">Home</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="tasks.html" class="active">Tasks</a></li>
+        <li><a href="messages.html">Messages</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+      </ul>
+    </aside>
+
+    <section class="content">
+      <div class="cards">
+        <div class="card">
+          <div class="card-label">Total Tasks</div>
+          <div class="card-value" id="stat-total">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">In Progress</div>
+          <div class="card-value" id="stat-active">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Completed</div>
+          <div class="card-value" id="stat-done">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Overdue</div>
+          <div class="card-value" id="stat-overdue">—</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Task List</h2>
+        <form class="add-task-form" id="add-task-form">
+          <input type="text" id="new-task-input" placeholder="Add a new task…" autocomplete="off" />
+          <input type="date" id="new-task-due" />
+          <button type="submit">Add</button>
+        </form>
+        <ul class="task-list" id="task-list">
+          <li class="task-item"><span class="task-label" style="color:var(--gray-400)">Connecting…</span></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script src="js/firebase.js"></script>
+  <script>
+    let tasks = {}; // { pushId: {text, done, createdAt, dueDate?} }
+
+    function updateStats() {
+      const all    = Object.values(tasks);
+      const done   = all.filter(t => t.done).length;
+      const active = all.length - done;
+      const today  = new Date(); today.setHours(0, 0, 0, 0);
+      const overdue = all.filter(t => !t.done && t.dueDate && new Date(t.dueDate + 'T00:00:00') < today).length;
+      document.getElementById('stat-total').textContent   = all.length  || '—';
+      document.getElementById('stat-active').textContent  = active      || '—';
+      document.getElementById('stat-done').textContent    = done        || '—';
+      document.getElementById('stat-overdue').textContent = overdue     || '—';
+    }
+
+    function renderTasks() {
+      const list    = document.getElementById('task-list');
+      const today   = new Date(); today.setHours(0, 0, 0, 0);
+      const entries = Object.entries(tasks)
+        .sort((a, b) => (a[1].createdAt || 0) - (b[1].createdAt || 0));
+
+      if (!entries.length) {
+        list.innerHTML = '<li class="task-item"><span class="task-label" style="color:var(--gray-400)">No tasks yet — add one above.</span></li>';
+        updateStats();
+        return;
+      }
+
+      list.innerHTML = '';
+      entries.forEach(([id, task]) => {
+        const overdue = !task.done && task.dueDate && new Date(task.dueDate + 'T00:00:00') < today;
+        const li = document.createElement('li');
+        li.className = 'task-item' + (task.done ? ' done' : '');
+        li.innerHTML = `
+          <input type="checkbox" data-id="${id}" ${task.done ? 'checked' : ''} />
+          <span class="task-label">${task.text}</span>
+          ${task.dueDate
+            ? `<span class="task-meta ${overdue ? 'task-overdue' : ''}">Due: ${task.dueDate}</span>`
+            : '<span class="task-meta"></span>'}
+          <button class="task-del" data-id="${id}" title="Delete">×</button>`;
+        list.appendChild(li);
+      });
+      updateStats();
+    }
+
+    // Real-time listener
+    fbListen('tasks', (data, path, isPatch) => {
+      if (path === '/') {
+        tasks = data || {};
+      } else {
+        const id = path.slice(1);
+        if (data === null) delete tasks[id];
+        else tasks[id] = Object.assign({}, tasks[id], data);
+      }
+      renderTasks();
+    });
+
+    // Add task
+    document.getElementById('add-task-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const text = document.getElementById('new-task-input').value.trim();
+      if (!text) return;
+      const dueDate = document.getElementById('new-task-due').value;
+      const payload = { text, done: false, createdAt: Date.now() };
+      if (dueDate) payload.dueDate = dueDate;
+      await fbPush('tasks', payload).catch(console.error);
+      document.getElementById('new-task-input').value = '';
+      document.getElementById('new-task-due').value   = '';
+      document.getElementById('new-task-input').focus();
+    });
+
+    // Toggle done
+    document.getElementById('task-list').addEventListener('change', async e => {
+      if (!e.target.matches('input[type="checkbox"]')) return;
+      const id = e.target.dataset.id;
+      await fbUpdate(`tasks/${id}`, { done: e.target.checked }).catch(console.error);
+    });
+
+    // Delete task
+    document.getElementById('task-list').addEventListener('click', async e => {
+      const btn = e.target.closest('.task-del');
+      if (!btn) return;
+      await fbDelete(`tasks/${btn.dataset.id}`).catch(console.error);
+    });
+  </script>
+</body>
+</html>

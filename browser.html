@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browser</title>
+  <script src="js/theme.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gray-900: #1a1a1a; --gray-800: #2b2b2b; --gray-700: #3c3c3c;
+      --gray-600: #555; --gray-400: #9a9a9a; --gray-200: #e0e0e0;
+      --gray-100: #f4f4f4; --yellow-400: #f5c518; --yellow-300: #f7d44a;
+      --radius: 8px;
+    }
+    [data-theme="ocean"]    { --gray-900:#0c2340;--gray-800:#0f2d52;--gray-700:#1a3d6b;--gray-200:#bde0f5;--gray-100:#e8f4fb;--yellow-400:#06b6d4;--yellow-300:#22d3ee; }
+    [data-theme="meadow"]   { --gray-900:#0f2d1a;--gray-800:#144020;--gray-700:#1a5228;--gray-200:#b7e0c0;--gray-100:#e8f6ec;--yellow-400:#22c55e;--yellow-300:#4ade80; }
+    [data-theme="sunset"]   { --gray-900:#3d1505;--gray-800:#541e07;--gray-700:#6b2a0a;--gray-200:#f5cdb5;--gray-100:#fdf0e8;--yellow-400:#f97316;--yellow-300:#fb923c; }
+    [data-theme="lavender"] { --gray-900:#2e0d57;--gray-800:#3d1270;--gray-700:#4e1c88;--gray-200:#e0cff5;--gray-100:#f5eeff;--yellow-400:#a855f7;--yellow-300:#c084fc; }
+    [data-theme="rose"]     { --gray-900:#4a0520;--gray-800:#660830;--gray-700:#80103f;--gray-200:#f5c0cf;--gray-100:#fdf0f3;--yellow-400:#f43f5e;--yellow-300:#fb7185; }
+    [data-theme="dark"]     { --gray-900:#1c1c2e;--gray-800:#16162a;--gray-700:#222238;--gray-400:#4a4a6a;--gray-200:#2a2a48;--gray-100:#0e0e1e;--yellow-400:#f5c518;--yellow-300:#f7d44a; }
+
+    html, body { height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--gray-100); color: var(--gray-900); }
+
+    /* ── Toolbar ───────────────────────────────────────────────── */
+    .toolbar {
+      height: 48px;
+      background: var(--gray-900);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 8px;
+      border-bottom: 3px solid var(--yellow-400);
+      flex-shrink: 0;
+    }
+
+    .tb-btn {
+      width: 32px; height: 32px; border-radius: 6px;
+      border: none; background: transparent;
+      color: var(--gray-400); font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .tb-btn:hover:not(:disabled) { background: var(--gray-700); color: #fff; }
+    .tb-btn:disabled { opacity: 0.3; cursor: default; }
+    .tb-btn.active { color: var(--yellow-400); }
+
+    .tb-sep { width: 1px; height: 22px; background: var(--gray-700); margin: 0 2px; flex-shrink: 0; }
+
+    /* URL bar */
+    .url-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--gray-800);
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-700);
+      height: 34px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+      margin: 0 4px;
+    }
+    .url-wrap:focus-within { border-color: var(--yellow-400); }
+    .url-scheme {
+      padding: 0 6px 0 10px;
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #url-bar {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #fff;
+      font-size: 0.85rem;
+      padding: 0 6px 0 0;
+      min-width: 0;
+    }
+    #url-bar::placeholder { color: var(--gray-400); }
+
+    .tb-go {
+      padding: 0 10px;
+      height: 100%;
+      border: none;
+      background: var(--gray-700);
+      color: var(--gray-400);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .tb-go:hover { background: var(--yellow-400); color: var(--gray-900); }
+
+    /* Dash link */
+    .tb-dash {
+      color: var(--yellow-400);
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .tb-dash:hover { color: var(--yellow-300); }
+
+    /* ── Status bar (blocked / loading) ────────────────────────── */
+    .status-bar {
+      height: 28px;
+      background: var(--yellow-400);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0 1rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--gray-900);
+      flex-shrink: 0;
+    }
+    .status-bar[hidden] { display: none; }
+    .status-open {
+      margin-left: auto;
+      background: var(--gray-900);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .status-open:hover { background: var(--gray-700); }
+    .status-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--gray-900); font-size: 1rem; line-height: 1; margin-left: 4px;
+    }
+
+    /* ── Frame ─────────────────────────────────────────────────── */
+    #browser-frame {
+      flex: 1;
+      border: none;
+      width: 100%;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="tb-btn" id="btn-back"    title="Back"    disabled>&#8592;</button>
+    <button class="tb-btn" id="btn-forward" title="Forward" disabled>&#8594;</button>
+    <button class="tb-btn" id="btn-refresh" title="Refresh">&#8635;</button>
+    <button class="tb-btn" id="btn-home"    title="Home">&#8962;</button>
+    <div class="tb-sep"></div>
+
+    <div class="url-wrap">
+      <span class="url-scheme" id="url-scheme"></span>
+      <input id="url-bar" type="text" placeholder="Search or enter a URL…" autocomplete="off" spellcheck="false" />
+      <button class="tb-go" id="btn-go">Go</button>
+    </div>
+
+    <div class="tb-sep"></div>
+    <button class="tb-btn" id="btn-newtab" title="New tab">&#43;</button>
+    <a href="index.html" class="tb-dash" title="Back to Dashboard">&#8962; Dashboard</a>
+  </div>
+
+  <!-- Blocked / loading notice -->
+  <div class="status-bar" id="status-bar" hidden>
+    <span id="status-msg"></span>
+    <button class="status-open" id="status-open">Open in new tab ↗</button>
+    <button class="status-close" id="status-close">×</button>
+  </div>
+
+  <!-- Browser frame -->
+  <iframe id="browser-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>
+
+  <script>
+    const frame   = document.getElementById('browser-frame');
+    const urlBar  = document.getElementById('url-bar');
+    const scheme  = document.getElementById('url-scheme');
+    const btnBack    = document.getElementById('btn-back');
+    const btnForward = document.getElementById('btn-forward');
+    const btnRefresh = document.getElementById('btn-refresh');
+    const statusBar  = document.getElementById('status-bar');
+    const statusMsg  = document.getElementById('status-msg');
+    const statusOpen = document.getElementById('status-open');
+
+    // ── History stack ────────────────────────────────────────────
+    const hist = [];
+    let histIdx = -1;
+    let currentUrl = '';
+
+    // ── URL processing ───────────────────────────────────────────
+    function processInput(raw) {
+      const s = raw.trim();
+      if (!s) return null;
+      if (/^https?:\/\//i.test(s)) return s;
+      if (/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(s)) return 'https://' + s;
+      return 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(s);
+    }
+
+    function updateScheme(url) {
+      try {
+        const u = new URL(url);
+        scheme.textContent = u.protocol === 'https:' ? '🔒' : '🔓';
+        urlBar.value = u.host + u.pathname + u.search;
+      } catch {
+        scheme.textContent = '';
+        urlBar.value = url;
+      }
+    }
+
+    function updateNavBtns() {
+      btnBack.disabled    = histIdx <= 0;
+      btnForward.disabled = histIdx >= hist.length - 1;
+    }
+
+    // ── Navigate ─────────────────────────────────────────────────
+    function navigate(url, pushHistory = true) {
+      if (!url) return;
+      currentUrl = url;
+      statusBar.setAttribute('hidden', '');
+
+      if (pushHistory) {
+        hist.splice(histIdx + 1);
+        hist.push(url);
+        histIdx = hist.length - 1;
+      }
+
+      updateScheme(url);
+      updateNavBtns();
+      statusOpen.onclick = () => window.open(url, '_blank');
+
+      // Detect block after brief delay
+      let loaded = false;
+      frame.onload = () => { loaded = true; };
+      setTimeout(() => {
+        if (!loaded) {
+          statusMsg.textContent = `"${new URL(url).hostname}" may not allow embedding.`;
+          statusBar.removeAttribute('hidden');
+        }
+      }, 2800);
+
+      frame.src = url;
+    }
+
+    // ── Home page (srcdoc) ───────────────────────────────────────
+    function loadHome() {
+      statusBar.setAttribute('hidden', '');
+      scheme.textContent = '';
+      urlBar.value = '';
+      updateNavBtns();
+
+      const theme = localStorage.getItem('dashboard_theme') || 'default';
+      const accent = {
+        ocean:'#06b6d4', meadow:'#22c55e', sunset:'#f97316',
+        lavender:'#a855f7', rose:'#f43f5e', dark:'#f5c518'
+      }[theme] || '#f5c518';
+      const bg = {
+        ocean:'#e8f4fb', meadow:'#e8f6ec', sunset:'#fdf0e8',
+        lavender:'#f5eeff', rose:'#fdf0f3', dark:'#0e0e1e'
+      }[theme] || '#f4f4f4';
+      const fg = theme === 'dark' ? '#ddddf0' : '#1a1a1a';
+      const inputBg = theme === 'dark' ? '#1c1c2e' : '#fff';
+
+      frame.removeAttribute('src');
+      frame.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;background:${bg};color:${fg};
+       display:flex;flex-direction:column;align-items:center;justify-content:center;
+       min-height:100vh;gap:1.5rem;padding:2rem}
+  h1{font-size:1.6rem;font-weight:800;letter-spacing:.02em}
+  h1 span{color:${accent}}
+  form{display:flex;gap:.5rem;width:100%;max-width:520px}
+  input{flex:1;padding:.65rem 1rem;border:2px solid #ccc;border-radius:8px;
+        font-size:1rem;outline:none;background:${inputBg};color:${fg};transition:border-color .15s}
+  input:focus{border-color:${accent}}
+  button{padding:.65rem 1.25rem;background:${accent};border:none;border-radius:8px;
+         font-weight:700;font-size:.95rem;cursor:pointer;color:#111;white-space:nowrap}
+  .links{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;max-width:520px}
+  .link{padding:.35rem .9rem;border:1.5px solid #ccc;border-radius:999px;
+        font-size:.82rem;cursor:pointer;background:transparent;color:${fg};transition:border-color .15s}
+  .link:hover{border-color:${accent}}
+</style></head><body>
+<h1>&#127760; <span>Browser</span></h1>
+<form id="f">
+  <input id="q" placeholder="Search or enter a URL…" autofocus autocomplete="off"/>
+  <button type="submit">Go</button>
+</form>
+<div class="links">
+  <button class="link" data-url="https://google.com">Google</button>
+  <button class="link" data-url="https://html.duckduckgo.com/html/">DuckDuckGo</button>
+  <button class="link" data-url="https://news.ycombinator.com">Hacker News</button>
+  <button class="link" data-url="https://github.com">GitHub</button>
+  <button class="link" data-url="https://wikipedia.org">Wikipedia</button>
+  <button class="link" data-url="https://youtube.com">YouTube</button>
+</div>
+<script>
+document.getElementById("f").addEventListener("submit",function(e){
+  e.preventDefault();
+  var q=document.getElementById("q").value.trim();
+  if(!q)return;
+  var url;
+  if(/^https?:\\/\\//i.test(q))url=q;
+  else if(/^[\\w-]+(\\.\\w+)+/.test(q))url="https://"+q;
+  else url="https://html.duckduckgo.com/html/?q="+encodeURIComponent(q);
+  window.parent.postMessage({type:"nav",url:url},"*");
+});
+document.querySelectorAll(".link").forEach(function(b){
+  b.addEventListener("click",function(){
+    window.parent.postMessage({type:"nav",url:b.dataset.url},"*");
+  });
+});
+<\/script></body></html>`;
+    }
+
+    // Listen for navigation messages from home page
+    window.addEventListener('message', e => {
+      if (e.data && e.data.type === 'nav') navigate(e.data.url);
+    });
+
+    // ── Controls ─────────────────────────────────────────────────
+    document.getElementById('btn-go').addEventListener('click', () => {
+      const url = processInput(urlBar.value);
+      if (url) navigate(url);
+    });
+    urlBar.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { const url = processInput(urlBar.value); if (url) navigate(url); }
+    });
+    urlBar.addEventListener('focus', () => {
+      try { urlBar.value = currentUrl || ''; } catch {}
+    });
+    urlBar.addEventListener('blur', () => {
+      if (currentUrl) updateScheme(currentUrl);
+    });
+
+    btnBack.addEventListener('click', () => {
+      if (histIdx > 0) { histIdx--; navigate(hist[histIdx], false); }
+    });
+    btnForward.addEventListener('click', () => {
+      if (histIdx < hist.length - 1) { histIdx++; navigate(hist[histIdx], false); }
+    });
+    btnRefresh.addEventListener('click', () => {
+      if (currentUrl) { frame.src = currentUrl; }
+      else loadHome();
+    });
+    btnHome.addEventListener('click', loadHome);
+    document.getElementById('btn-newtab').addEventListener('click', () => {
+      window.open('browser.html', '_blank');
+    });
+    document.getElementById('status-close').addEventListener('click', () => {
+      statusBar.setAttribute('hidden', '');
+    });
+
+    // ── Init ─────────────────────────────────────────────────────
+    loadHome();
+  </script>
+</body>
+</html>

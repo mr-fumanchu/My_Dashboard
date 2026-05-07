@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/theme.js"></script>
+  <style>
+    .settings-section { display: flex; flex-direction: column; gap: 1.5rem; }
+    .field { display: flex; flex-direction: column; gap: 0.35rem; }
+    .field label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+                   letter-spacing: 0.05em; color: var(--text-secondary); }
+    .field input, .field select, .field textarea {
+      padding: 0.6rem 0.75rem; border: none;
+      border-radius: var(--radius); font-size: 0.9rem;
+      background: var(--bg); color: var(--text-primary); outline: none;
+      box-shadow: var(--shadow-inset-sm); transition: box-shadow 0.15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      box-shadow: var(--shadow-inset-sm), 0 0 0 2px var(--yellow-400);
+    }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 0; border-bottom: 1px solid var(--gray-200);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: 0.9rem; }
+    .toggle-sub { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.1rem; }
+    .toggle {
+      position: relative; width: 44px; height: 24px; flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0; border-radius: 999px;
+      background: var(--gray-400); cursor: pointer; transition: background 0.2s;
+    }
+    .toggle input:checked + .toggle-track { background: var(--yellow-400); }
+    .toggle-track::after {
+      content: ''; position: absolute; left: 3px; top: 3px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; transition: transform 0.2s;
+    }
+    .toggle input:checked + .toggle-track::after { transform: translateX(20px); }
+    .btn-save {
+      align-self: flex-start; padding: 0.6rem 1.5rem;
+      background: var(--yellow-400); border: none; border-radius: var(--radius);
+      font-weight: 700; font-size: 0.9rem; cursor: pointer;
+      box-shadow: var(--shadow-raise-sm); transition: box-shadow 0.15s, background 0.15s;
+    }
+    .btn-save:hover { background: var(--yellow-300); box-shadow: var(--shadow-inset-sm); }
+    .api-key-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+    .api-key-row .field { flex: 1; }
+    .btn-reveal {
+      flex-shrink: 0; padding: 0.6rem 0.75rem; margin-bottom: 0;
+      border: none; border-radius: var(--radius);
+      background: var(--bg); cursor: pointer; font-size: 0.8rem;
+      color: var(--text-secondary); box-shadow: var(--shadow-raise-sm);
+      transition: box-shadow 0.15s; white-space: nowrap; align-self: flex-end;
+    }
+    .btn-reveal:hover { box-shadow: var(--shadow-inset-sm); }
+    /* ── Theme swatches ── */
+    .theme-swatches { display: flex; flex-wrap: wrap; gap: 0.85rem; }
+    .theme-swatch { cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+    .theme-swatch input { display: none; }
+    .swatch-preview {
+      width: 80px; height: 58px; border-radius: 6px; overflow: hidden;
+      border: 2px solid var(--gray-200);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-shadow: var(--shadow-raise-sm);
+    }
+    .theme-swatch input:checked ~ .swatch-preview,
+    .theme-swatch:hover .swatch-preview {
+      border-color: var(--yellow-400);
+      box-shadow: var(--shadow-raise-sm), 0 0 0 2px var(--yellow-400);
+    }
+    .sw-header { height: 13px; }
+    .sw-body { display: flex; height: 45px; }
+    .sw-sidebar { width: 18px; }
+    .sw-content { flex: 1; padding: 5px 6px; display: flex; flex-direction: column; gap: 4px; }
+    .sw-bar { height: 5px; border-radius: 2px; }
+    .sw-bar-thin { height: 3px; border-radius: 2px; opacity: 0.4; }
+    .swatch-name { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); }
+    .api-note {
+      font-size: 0.78rem; color: var(--text-secondary);
+      padding: 0.5rem 0.75rem; background: var(--gray-100);
+      border-radius: var(--radius); border-left: 3px solid var(--yellow-400);
+      line-height: 1.5; box-shadow: var(--shadow-raise-sm);
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1 class="header-title">Dashboard</h1>
+    <nav class="header-nav">
+      <a href="index.html">Home</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html" style="color:var(--yellow-400)">Settings</a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="analytics.html">Analytics</a></li>
+        <li><a href="tasks.html">Tasks</a></li>
+        <li><a href="messages.html">Messages</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+      </ul>
+    </aside>
+
+    <section class="content">
+      <div class="panel">
+        <h2 class="panel-title">Profile</h2>
+        <div class="settings-section">
+          <div class="field">
+            <label>Display Name</label>
+            <input type="text" id="prof-name" placeholder="Your name" />
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="prof-email" placeholder="you@example.com" />
+          </div>
+          <div class="field">
+            <label>Bio</label>
+            <textarea id="prof-bio" placeholder="A short bio…"></textarea>
+          </div>
+          <button class="btn-save" id="save-profile">Save Changes</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Notifications</h2>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Email notifications</div>
+            <div class="toggle-sub">Receive updates via email</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="notif-email" checked /><span class="toggle-track"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Task reminders</div>
+            <div class="toggle-sub">Get reminded before task due dates</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="notif-tasks" checked /><span class="toggle-track"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Message alerts</div>
+            <div class="toggle-sub">Notify on new messages</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="notif-msgs" /><span class="toggle-track"></span></label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Appearance</h2>
+        <div class="settings-section">
+
+          <div class="field">
+            <label>Theme</label>
+            <div class="theme-swatches" id="theme-swatches">
+
+              <label class="theme-swatch">
+                <input type="radio" name="theme" value="default" />
+                <div class="swatch-preview">
+                  <div class="sw-header" style="background:#1a1a1a"></div>
+                  <div class="sw-body">
+                    <div class="sw-sidebar" style="background:#2b2b2b"></div>
+                    <div class="sw-content" style="background:#f4f4f4">
+                      <div class="sw-bar" style="background:#f5c518"></div>
+                      <div class="sw-bar-thin" style="background:#9a9a9a"></div>
+                      <div class="sw-bar-thin" style="background:#9a9a9a"></div>
+                    </div>
+                  </div>
+                </div>
+                <span class="swatch-name">Classic</span>
+              </label>
+
+              <label class="theme-swatch">
+                <input type="radio" name="theme" value="ocean" />
+                <div class="swatch-preview">
+                  <div class="sw-header" style="background:#0c2340"></div>
+                  <div class="sw-body">
+                    <div class="sw-sidebar" style="background:#0f2d52"></div>
+                    <div class="sw-content" style="background:#e8f4fb">
+                      <div class="sw-bar" style="background:#06b6d4"></div>
+                      <div class="sw-bar-thin" style="background:#7aaedb"></div>
+                      <div class="sw-bar-thin" style="background:#7aaedb"></div>
+                    </div>
+                  </div>
+                </div>
+                <span class="swatch-name">Ocean</span>
+              </label>
+
+              <label class="theme-swatch">
+                <input type="radio" name="theme" value="meadow" />
+                <div class="swatch-preview">
+                  <div class="sw-header" style="background:#0f2d1a"></div>
+                  <div class="sw-body">
+                    <div class="sw-sidebar" style="background:#144020"></div>
+                    <div class="sw-content" style="background:#e8f6ec">
+                      <div class="sw-bar" style="background:#22c55e"></div>
+                      <div class="sw-bar-thin" style="background:#6dba82"></div>
+                      <div class="sw-bar-thin" style="background:#6dba82"></div>
+                    </div>
+                  </div>
+                </div>
+                <span class="swatch-name">Meadow</span>
+              </label>
+
+              <label class="theme-swatch">
+                <input type="radio" name="theme" value="sunset" />
+                <div class="swatch-preview">
+                  <div class="sw-header" style="background:#3d1505"></div>
+                  <div class="sw-body">
+                    <div class="sw-sidebar" style="background:#541e07"></div>
+                    <div class="sw-content" style="background:#fdf0e8">
+                      <div class="sw-bar" style="background:#f97316"></div>
+                      <div class="sw-bar-thin" style="background:#d4845a"></div>
+                      <div class="sw-bar-thin" style="background:#d4845a"></div>
+                    </div>
+                  </div>
+                </div>
+                <span class="swatch-name">Sunset</span>
+              </label>
+
+              <label class="theme-swatch">
+                <input type="radio" name="theme" value="lavender" />
+                <div class="swatch-preview">
+                  <div class="sw-header" style="background:#2e0d57"></div>
+                  <div class="sw-body">
+                    <div class="sw-sidebar" style="background:#3d1270"></div>
+                    <div class="sw-content" style="background:#f5eeff">
+                      <div class="sw-bar" style="background:#a855f7"></div>
+                      <div class="sw-bar-thin" style="background:#b28de0"></div>
+                      <div class="sw-bar-thin" style="background:#b28de0"></div>
+                    </div>
+                  </div>
+                </div>
+                <span class="swatch-name">Lavender</span>
+              </label>
+
+              <label class="theme-swatch">
+                <input type="radio" name="theme" value="rose" />
+                <div class="swatch-preview">
+                  <div class="sw-header" style="background:#4a0520"></div>
+                  <div class="sw-body">
+                    <div class="sw-sidebar" style="background:#660830"></div>
+                    <div class="sw-content" style="background:#fdf0f3">
+                      <div class="sw-bar" style="background:#f43f5e"></div>
+                      <div class="sw-bar-thin" style="background:#e0829a"></div>
+                      <div class="sw-bar-thin" style="background:#e0829a"></div>
+                    </div>
+                  </div>
+                </div>
+                <span class="swatch-name">Rose</span>
+              </label>
+
+              <label class="theme-swatch">
+                <input type="radio" name="theme" value="dark" />
+                <div class="swatch-preview">
+                  <div class="sw-header" style="background:#1c1c2e"></div>
+                  <div class="sw-body">
+                    <div class="sw-sidebar" style="background:#16162a"></div>
+                    <div class="sw-content" style="background:#0e0e1e">
+                      <div class="sw-bar" style="background:#f5c518"></div>
+                      <div class="sw-bar-thin" style="background:#4a4a6a"></div>
+                      <div class="sw-bar-thin" style="background:#4a4a6a"></div>
+                    </div>
+                  </div>
+                </div>
+                <span class="swatch-name">Dark</span>
+              </label>
+
+              <label class="theme-swatch">
+                <input type="radio" name="theme" value="system" />
+                <div class="swatch-preview" style="position:relative;overflow:hidden;">
+                  <div style="position:absolute;inset:0;clip-path:polygon(0 0,50% 0,100% 100%,0 100%)">
+                    <div class="sw-header" style="background:#1a1a1a"></div>
+                    <div class="sw-body">
+                      <div class="sw-sidebar" style="background:#2b2b2b"></div>
+                      <div class="sw-content" style="background:#f4f4f4">
+                        <div class="sw-bar" style="background:#f5c518"></div>
+                        <div class="sw-bar-thin" style="background:#9a9a9a"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="position:absolute;inset:0;clip-path:polygon(50% 0,100% 0,100% 100%)">
+                    <div class="sw-header" style="background:#1c1c2e"></div>
+                    <div class="sw-body">
+                      <div class="sw-sidebar" style="background:#16162a"></div>
+                      <div class="sw-content" style="background:#0e0e1e">
+                        <div class="sw-bar" style="background:#f5c518"></div>
+                        <div class="sw-bar-thin" style="background:#4a4a6a"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <span class="swatch-name">System</span>
+              </label>
+
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Language</label>
+            <select>
+              <option>English</option>
+              <option>Spanish</option>
+              <option>French</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+      <div class="panel">
+        <h2 class="panel-title">Mail</h2>
+        <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1.25rem;line-height:1.5;">
+          Configure email accounts and IMAP/SMTP servers. Multiple accounts are supported.
+        </p>
+        <a href="mail-settings.html" class="btn-save" style="text-decoration:none;display:inline-block;">
+          Configure Mail Servers →
+        </a>
+      </div>
+
+      <div class="panel" id="ai-panel">
+        <h2 class="panel-title">AI Assistant</h2>
+        <div class="settings-section">
+
+          <div class="field">
+            <label>Assistant Name</label>
+            <input type="text" id="set-llm-title" placeholder="AI Assistant" />
+          </div>
+
+          <p class="api-note">
+            API keys are stored only in your browser's local storage and never sent anywhere by this dashboard.
+          </p>
+
+          <div class="api-key-row">
+            <div class="field">
+              <label>Anthropic — Claude</label>
+              <input type="password" id="key-claude" placeholder="sk-ant-…" autocomplete="off" />
+            </div>
+            <button class="btn-reveal" data-target="key-claude">Show</button>
+          </div>
+
+          <div class="api-key-row">
+            <div class="field">
+              <label>OpenAI — ChatGPT</label>
+              <input type="password" id="key-openai" placeholder="sk-…" autocomplete="off" />
+            </div>
+            <button class="btn-reveal" data-target="key-openai">Show</button>
+          </div>
+
+          <div class="api-key-row">
+            <div class="field">
+              <label>Google — Gemini</label>
+              <input type="password" id="key-gemini" placeholder="AIza…" autocomplete="off" />
+            </div>
+            <button class="btn-reveal" data-target="key-gemini">Show</button>
+          </div>
+
+          <div class="api-key-row">
+            <div class="field">
+              <label>Perplexity</label>
+              <input type="password" id="key-perplexity" placeholder="pplx-…" autocomplete="off" />
+            </div>
+            <button class="btn-reveal" data-target="key-perplexity">Show</button>
+          </div>
+
+          <div class="api-key-row">
+            <div class="field">
+              <label>xAI — Grok</label>
+              <input type="password" id="key-grok" placeholder="xai-…" autocomplete="off" />
+            </div>
+            <button class="btn-reveal" data-target="key-grok">Show</button>
+          </div>
+
+          <div class="api-key-row">
+            <div class="field">
+              <label>Microsoft — Copilot</label>
+              <input type="password" id="key-copilot" placeholder="…" autocomplete="off" />
+            </div>
+            <button class="btn-reveal" data-target="key-copilot">Show</button>
+          </div>
+
+          <button class="btn-save" id="save-ai">Save Changes</button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script src="js/firebase.js"></script>
+  <script>
+    // AI key input IDs → Firebase key names
+    const KEY_MAP = {
+      'key-claude':     'claude',
+      'key-openai':     'openai',
+      'key-gemini':     'gemini',
+      'key-perplexity': 'perplexity',
+      'key-grok':       'grok',
+      'key-copilot':    'copilot'
+    };
+
+    // ── Theme helper ─────────────────────────────────────────────
+    function applyTheme(val) {
+      localStorage.setItem('dashboard_theme', val);
+      if (val === 'default') {
+        document.documentElement.removeAttribute('data-theme');
+      } else if (val === 'system') {
+        const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement[dark ? 'setAttribute' : 'removeAttribute']('data-theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', val);
+      }
+    }
+
+    // ── Theme picker ─────────────────────────────────────────────
+    document.querySelectorAll('input[name="theme"]').forEach(radio => {
+      radio.addEventListener('change', async function () {
+        applyTheme(this.value);
+        await fbUpdate('settings/appearance', { theme: this.value }).catch(console.error);
+      });
+    });
+
+    // ── Notification toggles — auto-save on change ───────────────
+    ['notif-email', 'notif-tasks', 'notif-msgs'].forEach(id => {
+      document.getElementById(id).addEventListener('change', async () => {
+        await fbUpdate('settings/notifications', {
+          emailNotifs:   document.getElementById('notif-email').checked,
+          taskReminders: document.getElementById('notif-tasks').checked,
+          messageAlerts: document.getElementById('notif-msgs').checked,
+        }).catch(console.error);
+      });
+    });
+
+    // ── Profile save ─────────────────────────────────────────────
+    document.getElementById('save-profile').addEventListener('click', async () => {
+      await fbUpdate('settings/profile', {
+        displayName: document.getElementById('prof-name').value.trim(),
+        email:       document.getElementById('prof-email').value.trim(),
+        bio:         document.getElementById('prof-bio').value.trim(),
+      }).catch(console.error);
+      const btn = document.getElementById('save-profile');
+      btn.textContent = 'Saved ✓';
+      setTimeout(() => { btn.textContent = 'Save Changes'; }, 2000);
+    });
+
+    // ── Show/hide toggles for password fields ────────────────────
+    document.querySelectorAll('.btn-reveal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        if (input.type === 'password') { input.type = 'text';     btn.textContent = 'Hide'; }
+        else                           { input.type = 'password'; btn.textContent = 'Show'; }
+      });
+    });
+
+    // ── AI assistant save ────────────────────────────────────────
+    document.getElementById('save-ai').addEventListener('click', async () => {
+      const title = document.getElementById('set-llm-title').value.trim() || 'AI Assistant';
+      const keys  = {};
+      Object.entries(KEY_MAP).forEach(([inputId, k]) => {
+        const v = document.getElementById(inputId).value.trim();
+        if (v) keys[k] = v;
+      });
+      await Promise.all([
+        fbUpdate('settings/aiAssistant', { title }),
+        fbSet('settings/aiKeys', Object.keys(keys).length ? keys : null),
+      ]).catch(console.error);
+      const btn = document.getElementById('save-ai');
+      btn.textContent = 'Saved ✓';
+      setTimeout(() => { btn.textContent = 'Save Changes'; }, 2000);
+    });
+
+    // ── Load all settings from Firebase on startup ───────────────
+    (async () => {
+      const s = await fbGet('settings').catch(() => null) || {};
+
+      const p = s.profile || {};
+      if (p.displayName) document.getElementById('prof-name').value  = p.displayName;
+      if (p.email)       document.getElementById('prof-email').value = p.email;
+      if (p.bio)         document.getElementById('prof-bio').value   = p.bio;
+
+      const n = s.notifications || {};
+      if ('emailNotifs'   in n) document.getElementById('notif-email').checked = n.emailNotifs;
+      if ('taskReminders' in n) document.getElementById('notif-tasks').checked = n.taskReminders;
+      if ('messageAlerts' in n) document.getElementById('notif-msgs').checked  = n.messageAlerts;
+
+      const theme = (s.appearance || {}).theme;
+      if (theme) {
+        applyTheme(theme);
+        const radio = document.querySelector(`input[name="theme"][value="${theme}"]`);
+        if (radio) radio.checked = true;
+      } else {
+        const saved = localStorage.getItem('dashboard_theme') || 'default';
+        const radio = document.querySelector(`input[name="theme"][value="${saved}"]`);
+        if (radio) radio.checked = true;
+      }
+
+      const ai = s.aiAssistant || {};
+      if (ai.title) document.getElementById('set-llm-title').value = ai.title;
+
+      const keys = s.aiKeys || {};
+      Object.entries(KEY_MAP).forEach(([inputId, k]) => {
+        document.getElementById(inputId).value = keys[k] || '';
+      });
+    })();
+  </script>
+</body>
+</html>
