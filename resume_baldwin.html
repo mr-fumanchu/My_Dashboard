@@ -6,55 +6,168 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Arial', sans-serif;
-      font-size: 11px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 13px;
       color: #1a1a1a;
       background: #fff;
-      padding: 36px 48px;
-      max-width: 820px;
+      padding: 56px 64px;
+      max-width: 860px;
       margin: 0 auto;
+      line-height: 1.5;
     }
-    /* Header */
-    .header { border-bottom: 2.5px solid #1a1a1a; padding-bottom: 10px; margin-bottom: 14px; }
-    .name { font-size: 26px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; }
-    .title { font-size: 13px; font-weight: 600; color: #444; margin-top: 2px; letter-spacing: 0.06em; text-transform: uppercase; }
-    .contact { margin-top: 6px; font-size: 10.5px; color: #333; display: flex; gap: 18px; flex-wrap: wrap; }
-    .contact span::before { content: ''; }
 
-    /* Section */
-    .section { margin-bottom: 14px; }
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+      border-bottom: 3px solid #1a1a1a;
+    }
+    .name {
+      font-family: Arial, sans-serif;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .title {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      color: #555;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+    .contact {
+      margin-top: 10px;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .contact span { white-space: nowrap; }
+
+    /* ── Section ── */
+    .section { margin-bottom: 22px; }
     .section-title {
-      font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
-      text-transform: uppercase; color: #fff; background: #1a1a1a;
-      padding: 3px 8px; margin-bottom: 8px; display: inline-block;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #1a1a1a;
+      border-bottom: 1.5px solid #1a1a1a;
+      padding-bottom: 4px;
+      margin-bottom: 14px;
     }
 
-    /* Summary */
-    .summary { font-size: 10.5px; line-height: 1.6; color: #222; }
+    /* ── Summary ── */
+    .summary {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #222;
+    }
 
-    /* Experience */
-    .job { margin-bottom: 11px; }
-    .job-header { display: flex; justify-content: space-between; align-items: baseline; }
-    .job-title { font-size: 12px; font-weight: 800; }
-    .job-date { font-size: 10px; color: #555; white-space: nowrap; }
-    .job-company { font-size: 10.5px; font-weight: 600; color: #444; margin-top: 1px; }
-    .job-location { font-size: 10px; color: #666; margin-top: 1px; margin-bottom: 4px; }
-    ul.bullets { padding-left: 14px; }
-    ul.bullets li { font-size: 10.5px; line-height: 1.55; margin-bottom: 2px; }
+    /* ── Job ── */
+    .job { margin-bottom: 18px; }
+    .job:last-child { margin-bottom: 0; }
+    .job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 1px;
+    }
+    .job-title {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .job-date {
+      font-family: Arial, sans-serif;
+      font-size: 11.5px;
+      color: #555;
+      white-space: nowrap;
+    }
+    .job-meta {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    .job-meta strong { color: #333; }
+    ul.bullets {
+      padding-left: 18px;
+    }
+    ul.bullets li {
+      font-size: 12.5px;
+      line-height: 1.65;
+      margin-bottom: 4px;
+      color: #222;
+    }
 
-    /* Skills */
-    .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
-    .skill-group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #1a1a1a; margin-bottom: 2px; }
-    .skill-tags { font-size: 10px; color: #333; line-height: 1.6; }
+    /* ── Skills ── */
+    .skill-group { margin-bottom: 10px; }
+    .skill-group-title {
+      font-family: Arial, sans-serif;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 3px;
+    }
+    .skill-tags {
+      font-size: 12px;
+      color: #333;
+      line-height: 1.7;
+    }
 
-    /* Education / Certs */
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
-    .edu-item .deg { font-size: 11px; font-weight: 700; }
-    .edu-item .school { font-size: 10.5px; color: #444; }
-    .cert-list { font-size: 10.5px; line-height: 1.7; }
+    /* ── Education & Certs ── */
+    .edu-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 32px;
+    }
+    .edu-item .deg {
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .edu-item .school {
+      font-size: 12.5px;
+      color: #444;
+      margin-top: 2px;
+    }
+    .cert-block .cert-title {
+      font-family: Arial, sans-serif;
+      font-size: 11.5px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .cert-block .cert-list {
+      font-size: 12.5px;
+      color: #333;
+      line-height: 1.7;
+    }
 
-    /* Footer note */
-    .footer-note { margin-top: 16px; font-size: 9.5px; color: #888; text-align: center; border-top: 1px solid #ddd; padding-top: 6px; }
+    /* ── Footer ── */
+    .footer-note {
+      margin-top: 24px;
+      font-family: Arial, sans-serif;
+      font-size: 10.5px;
+      color: #888;
+      text-align: center;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+
+    /* ── Print / Download ── */
+    @media print {
+      body { padding: 0.5in 0.6in; }
+    }
   </style>
 </head>
 <body>
@@ -62,12 +175,12 @@
   <!-- HEADER -->
   <div class="header">
     <div class="name">Tony Baldwin</div>
-    <div class="title">Senior Kitchen &amp; Bath Designer &nbsp;|&nbsp; Design Sales Consultant</div>
+    <div class="title">Senior Kitchen &amp; Bath Designer &nbsp;&bull;&nbsp; Design Sales Consultant</div>
     <div class="contact">
-      <span>&#128205; Kihei, Hawaii &nbsp;·&nbsp; Willing to Relocate</span>
-      <span>&#128222; (808) 868-9499</span>
+      <span>&#128205; Kihei, Hawaii &mdash; Willing to Relocate</span>
+      <span>&#9990; (808) 868-9499</span>
       <span>&#9993; tonybaldwin.mail@icloud.com</span>
-      <span>&#128176; Target: $70,000+ / year</span>
+      <span>&#128176; Salary Target: $70,000+</span>
     </div>
   </div>
 
@@ -75,7 +188,7 @@
   <div class="section">
     <div class="section-title">Professional Summary</div>
     <div class="summary">
-      Results-driven <strong>Senior Kitchen &amp; Bath Designer</strong> with 6+ years of hands-on experience delivering full-cycle kitchen and bathroom renovation projects for residential clients. Proficient in <strong>20/20 Design</strong> software for 3D space planning, rendering, and cabinetry layout. Proven ability to translate client visions into detailed design plans while managing budgets, vendor relationships, and project timelines from concept to installation. Strong sales background with demonstrated success in design consultation, product specification, and closing at Lowe's and HPM Building Supply. Adept at selecting and coordinating cabinetry, countertops, fixtures, hardware, and lighting to create cohesive, functional spaces. Skilled communicator and presenter with additional expertise in Adobe Creative Suite, digital marketing, and brand development — uniquely positioned to support design showroom environments requiring both creative vision and client-facing sales performance.
+      Results-driven <strong>Senior Kitchen &amp; Bath Designer</strong> with 6+ years of experience delivering full-cycle residential renovation projects from concept through installation. Proficient in <strong>20/20 Design</strong> for 3D space planning, cabinetry layout, and client presentations. Proven track record in design sales at both Lowe's and HPM Building Supply — translating client visions into detailed plans while managing budgets, vendor relationships, and project timelines. Skilled at specifying cabinetry, countertops, fixtures, hardware, and lighting to create cohesive, functional spaces. Brings an added edge through expertise in <strong>Adobe Creative Suite</strong>, digital marketing, branding, and content development — uniquely suited to showroom environments that demand both design excellence and high-touch client sales performance.
     </div>
   </div>
 
@@ -86,16 +199,15 @@
     <div class="job">
       <div class="job-header">
         <div class="job-title">Senior Kitchen &amp; Bath Designer</div>
-        <div class="job-date">February 2024 – Present</div>
+        <div class="job-date">February 2024 &ndash; Present</div>
       </div>
-      <div class="job-company">HPM Building Supply</div>
-      <div class="job-location">Lahaina, Hawaii</div>
+      <div class="job-meta"><strong>HPM Building Supply</strong> &nbsp;&bull;&nbsp; Lahaina, Hawaii</div>
       <ul class="bullets">
         <li>Lead client consultations to assess design goals, functional needs, and budget parameters for full kitchen and bathroom renovation projects.</li>
-        <li>Produce detailed floor plans, elevations, and photorealistic 3D renderings using <strong>20/20 Design</strong> software to guide client decision-making.</li>
-        <li>Specify and source cabinetry, countertops, fixtures, hardware, and lighting; manage vendor and supplier relationships to maintain product availability and pricing accuracy.</li>
+        <li>Produce detailed floor plans, elevations, and photorealistic 3D renderings using <strong>20/20 Design</strong> to guide client decision-making and close sales.</li>
+        <li>Specify and source cabinetry, countertops, fixtures, hardware, and lighting; manage vendor and supplier relationships to maintain product availability and competitive pricing.</li>
         <li>Coordinate with contractors, project managers, and installation crews to ensure design intent is executed on schedule and within scope.</li>
-        <li>Maintain CRM records, track project pipeline, and follow up with clients through every phase of the project lifecycle.</li>
+        <li>Maintain CRM records, manage project pipeline, and follow up with clients through every phase of the project lifecycle.</li>
         <li>Stay current on industry trends, new product lines, and design innovations to deliver contemporary, market-competitive design solutions.</li>
       </ul>
     </div>
@@ -103,15 +215,15 @@
     <div class="job">
       <div class="job-header">
         <div class="job-title">Kitchen Design Project Specialist</div>
-        <div class="job-date">March 2018 – February 2024</div>
+        <div class="job-date">March 2018 &ndash; February 2024</div>
       </div>
-      <div class="job-company">Lowe's</div>
+      <div class="job-meta"><strong>Lowe's</strong></div>
       <ul class="bullets">
         <li>Consulted with residential customers to develop personalized kitchen design plans using 20/20 Design software, driving high-value project sales.</li>
-        <li>Created scaled floor plans and 3D renderings to communicate design concepts and close design-to-install sales.</li>
+        <li>Created scaled floor plans and photorealistic 3D renderings to communicate design concepts and close design-to-install sales packages.</li>
         <li>Managed end-to-end customer relationships from initial consultation through product delivery and installation coordination.</li>
-        <li>Collaborated with third-party installation teams to ensure quality and customer satisfaction on completed projects.</li>
-        <li>Maintained up-to-date product knowledge across cabinetry, countertops, appliances, and plumbing fixtures to support informed client recommendations.</li>
+        <li>Collaborated with third-party installation teams to ensure quality standards and customer satisfaction on completed projects.</li>
+        <li>Maintained deep product knowledge across cabinetry, countertops, appliances, and plumbing fixtures to support informed client recommendations.</li>
       </ul>
     </div>
 
@@ -122,8 +234,9 @@
       </div>
       <ul class="bullets">
         <li>Directed design projects spanning concept development, layout planning, visual branding, and client presentations.</li>
-        <li>Applied expertise in Adobe Creative Suite (Photoshop, Illustrator, InDesign, Premiere, After Effects) to produce high-quality design deliverables.</li>
-        <li>Managed project timelines, client communications, and cross-functional team coordination.</li>
+        <li>Produced high-quality deliverables using Adobe Creative Suite — Photoshop, Illustrator, InDesign, Premiere, and After Effects.</li>
+        <li>Managed project timelines, client communications, and cross-functional team coordination from brief to final delivery.</li>
+        <li>Developed content strategies and brand identity systems for diverse clients across multiple industries.</li>
       </ul>
     </div>
 
@@ -132,56 +245,63 @@
         <div class="job-title">Owner / Executive Chef</div>
         <div class="job-date"></div>
       </div>
-      <div class="job-company">Carmel's</div>
+      <div class="job-meta"><strong>Carmel's</strong></div>
       <ul class="bullets">
-        <li>Founded and operated a full-service restaurant, overseeing all aspects of daily operations, staffing, menu development, and financial management.</li>
-        <li>Managed vendor relationships, inventory control, cost of goods, and payroll (accounting/bookkeeping).</li>
-        <li>Maintained food safety and sanitation standards in compliance with health regulations (ServSafe certified).</li>
+        <li>Founded and operated a full-service restaurant, overseeing daily operations, staffing, menu development, and financial performance.</li>
+        <li>Managed vendor relationships, inventory control, cost of goods, payroll, and bookkeeping.</li>
+        <li>Maintained food safety and sanitation compliance (ServSafe certified); trained and led kitchen and front-of-house staff.</li>
       </ul>
     </div>
   </div>
 
-  <!-- SKILLS -->
+  <!-- CORE SKILLS -->
   <div class="section">
     <div class="section-title">Core Skills &amp; Competencies</div>
-    <div class="skills-grid">
-      <div>
-        <div class="skill-group-title">Design &amp; Software</div>
-        <div class="skill-tags">20/20 Design · Layout Design · Concept Design · Space Planning · 3D Rendering · Adobe Photoshop · Adobe Illustrator · Adobe InDesign · Adobe Premiere · After Effects · Adobe Lightroom · Adobe Dreamweaver · Graphic Design · Illustration · Web Design · UI Design</div>
-      </div>
-      <div>
-        <div class="skill-group-title">Sales &amp; Client Relations</div>
-        <div class="skill-tags">Design Sales Consultation · Customer Relationship Management (CRM) · Retail Sales · Product Demos · Presentation Skills · Public Speaking · Conflict Management · Customer Service</div>
-      </div>
-      <div style="margin-top:6px;">
-        <div class="skill-group-title">Project &amp; Business Management</div>
-        <div class="skill-tags">Project Management · People Management · Inventory Control · Pricing Strategy · Accounting / Payroll · Bookkeeping · Leadership · Time Management · Curriculum Development</div>
-      </div>
-      <div style="margin-top:6px;">
-        <div class="skill-group-title">Marketing &amp; Technology</div>
-        <div class="skill-tags">Social Media Marketing · Content Creation · Branding · Google Analytics · Video Production · Video Editing · Photography · Microsoft Office · Microsoft Excel · Google Suite · Computer Networking · Application Development · iOS</div>
-      </div>
+
+    <div class="skill-group">
+      <div class="skill-group-title">Kitchen &amp; Bath Design</div>
+      <div class="skill-tags">20/20 Design &nbsp;&bull;&nbsp; Layout Design &nbsp;&bull;&nbsp; Space Planning &nbsp;&bull;&nbsp; 3D Rendering &nbsp;&bull;&nbsp; Concept Design &nbsp;&bull;&nbsp; Cabinetry Specification &nbsp;&bull;&nbsp; Countertop Selection &nbsp;&bull;&nbsp; Fixture &amp; Hardware Sourcing &nbsp;&bull;&nbsp; Remodeling &amp; Renovation Planning</div>
+    </div>
+
+    <div class="skill-group">
+      <div class="skill-group-title">Design &amp; Creative Software</div>
+      <div class="skill-tags">Adobe Photoshop &nbsp;&bull;&nbsp; Adobe Illustrator &nbsp;&bull;&nbsp; Adobe InDesign &nbsp;&bull;&nbsp; Adobe Premiere &nbsp;&bull;&nbsp; After Effects &nbsp;&bull;&nbsp; Adobe Lightroom &nbsp;&bull;&nbsp; Adobe Dreamweaver &nbsp;&bull;&nbsp; Graphic Design &nbsp;&bull;&nbsp; Illustration &nbsp;&bull;&nbsp; Web Design &nbsp;&bull;&nbsp; UI Design &nbsp;&bull;&nbsp; Photography &nbsp;&bull;&nbsp; Video Production &amp; Editing</div>
+    </div>
+
+    <div class="skill-group">
+      <div class="skill-group-title">Sales &amp; Client Relations</div>
+      <div class="skill-tags">Design Sales Consultation &nbsp;&bull;&nbsp; Customer Relationship Management (CRM) &nbsp;&bull;&nbsp; Retail Sales &nbsp;&bull;&nbsp; Product Demonstrations &nbsp;&bull;&nbsp; Presentation Skills &nbsp;&bull;&nbsp; Public Speaking &nbsp;&bull;&nbsp; Conflict Management &nbsp;&bull;&nbsp; Customer Service</div>
+    </div>
+
+    <div class="skill-group">
+      <div class="skill-group-title">Business &amp; Management</div>
+      <div class="skill-tags">Project Management &nbsp;&bull;&nbsp; People Management &nbsp;&bull;&nbsp; Inventory Control &nbsp;&bull;&nbsp; Pricing Strategy &nbsp;&bull;&nbsp; Accounting &amp; Payroll &nbsp;&bull;&nbsp; Bookkeeping &nbsp;&bull;&nbsp; Leadership &nbsp;&bull;&nbsp; Time Management &nbsp;&bull;&nbsp; Curriculum Development</div>
+    </div>
+
+    <div class="skill-group">
+      <div class="skill-group-title">Marketing &amp; Technology</div>
+      <div class="skill-tags">Social Media Marketing &nbsp;&bull;&nbsp; Content Creation &amp; Development &nbsp;&bull;&nbsp; Branding &nbsp;&bull;&nbsp; Google Analytics &nbsp;&bull;&nbsp; Microsoft Office &amp; Excel &nbsp;&bull;&nbsp; Google Suite &nbsp;&bull;&nbsp; Computer Networking &nbsp;&bull;&nbsp; Application Development &nbsp;&bull;&nbsp; iOS</div>
     </div>
   </div>
 
   <!-- EDUCATION & CERTIFICATIONS -->
   <div class="section">
     <div class="section-title">Education &amp; Certifications</div>
-    <div class="two-col">
+    <div class="edu-row">
       <div class="edu-item">
         <div class="deg">Bachelor's Degree</div>
         <div class="school">University of Toledo</div>
       </div>
-      <div>
-        <div class="skill-group-title" style="margin-bottom:4px;">Certifications</div>
+      <div class="cert-block">
+        <div class="cert-title">Certifications</div>
         <div class="cert-list">
-          ServSafe Certified &nbsp;·&nbsp; Valid Driver's License &nbsp;·&nbsp; Certified Reiki Practitioner
+          ServSafe Certified &nbsp;&bull;&nbsp; Valid Driver's License &nbsp;&bull;&nbsp; Certified Reiki Practitioner
         </div>
       </div>
     </div>
   </div>
 
-  <div class="footer-note">References available upon request &nbsp;·&nbsp; Willing to relocate nationally</div>
+  <div class="footer-note">References available upon request &nbsp;&bull;&nbsp; Willing to relocate nationally</div>
 
 </body>
 </html>
