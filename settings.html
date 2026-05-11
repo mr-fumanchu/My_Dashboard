@@ -469,6 +469,9 @@
         const v = document.getElementById(inputId).value.trim();
         if (v) keys[k] = v;
       });
+      // Save to localStorage so index.html can restore instantly without Firebase
+      localStorage.setItem('dash_ai_keys',  JSON.stringify(keys));
+      localStorage.setItem('dash_ai_title', title);
       await Promise.all([
         fbUpdate('settings/aiAssistant', { title }),
         fbSet('settings/aiKeys', Object.keys(keys).length ? keys : null),
@@ -504,9 +507,14 @@
       }
 
       const ai = s.aiAssistant || {};
-      if (ai.title) document.getElementById('set-llm-title').value = ai.title;
+      const aiTitle = ai.title || localStorage.getItem('dash_ai_title') || '';
+      if (aiTitle) document.getElementById('set-llm-title').value = aiTitle;
 
-      const keys = s.aiKeys || {};
+      const fbKeys = s.aiKeys || {};
+      const lsKeys = JSON.parse(localStorage.getItem('dash_ai_keys') || '{}');
+      const keys = Object.keys(fbKeys).length ? fbKeys : lsKeys;
+      // Keep localStorage in sync with whatever we loaded
+      if (Object.keys(keys).length) localStorage.setItem('dash_ai_keys', JSON.stringify(keys));
       Object.entries(KEY_MAP).forEach(([inputId, k]) => {
         document.getElementById(inputId).value = keys[k] || '';
       });

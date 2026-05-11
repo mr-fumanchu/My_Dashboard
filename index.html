@@ -978,6 +978,7 @@ document.querySelectorAll(".lnk").forEach(function(b){b.addEventListener("click"
       titleEl.replaceWith(inp); inp.focus(); inp.select();
       function commit() {
         const v = inp.value.trim() || 'AI Assistant';
+        lsSaveTitle(v);
         fbUpdate('settings/aiAssistant', { title: v }).catch(console.error);
         const s = document.createElement('span');
         s.className = 'llm-title'; s.id = 'llm-title'; s.textContent = v;
@@ -994,16 +995,28 @@ document.querySelectorAll(".lnk").forEach(function(b){b.addEventListener("click"
       });
     });
 
+    // ── localStorage helpers (instant, no network, persists across pages) ──
+    const LS_SEL  = 'dash_ai_selected';
+    const LS_TTL  = 'dash_ai_title';
+    const LS_KEYS = 'dash_ai_keys';
+    function lsGetKeys()        { try { return JSON.parse(localStorage.getItem(LS_KEYS) || 'null'); } catch { return null; } }
+    function lsSaveKeys(v)      { localStorage.setItem(LS_KEYS, JSON.stringify(v)); }
+    function lsGetSelected()    { return localStorage.getItem(LS_SEL) || null; }
+    function lsSaveSelected(v)  { localStorage.setItem(LS_SEL, v); }
+    function lsGetTitle()       { return localStorage.getItem(LS_TTL) || null; }
+    function lsSaveTitle(v)     { localStorage.setItem(LS_TTL, v); }
+
     let chatHistory = [];
     let chatSending = false;
 
     sel.addEventListener('change', function () {
       const k = this.value; if (!k) return;
+      lsSaveSelected(k);
       fbUpdate('settings/aiAssistant', { selected: k }).catch(console.error);
       loadLLM(k);
     });
 
-    async function loadLLM(provider) {
+    async function loadLLM(provider, _knownKey) {
       const cfg = LLM_CONFIG[provider];
       if (!cfg) return;
 
@@ -1044,9 +1057,13 @@ document.querySelectorAll(".lnk").forEach(function(b){b.addEventListener("click"
 
       if (!_servedLocally) { showNoServer(); return; }
 
-      const keys = await fbGet('settings/aiKeys').catch(() => null) || {};
-      if (keys[provider]) showChat(provider, cfg, keys[provider]);
-      else                showNoKey(provider, cfg);
+      // Use key passed directly, then localStorage, then Firebase
+      const key = _knownKey
+        || lsGetKeys()?.[provider]
+        || ((await fbGet('settings/aiKeys').catch(() => null) || {})[provider]);
+
+      if (key) showChat(provider, cfg, key);
+      else     showNoKey(provider, cfg);
     }
 
     function showNoServer() {
@@ -1070,11 +1087,21 @@ document.querySelectorAll(".lnk").forEach(function(b){b.addEventListener("click"
       frame.addEventListener('load', () => { loaded = true; });
       setTimeout(() => {
         if (!loaded) {
+          const freeBtn = _servedLocally
+            ? `<button class="llm-open-btn" id="llm-copilot-tab-btn"
+                 style="background:var(--gray-600);color:var(--text-primary);margin-top:0.4rem">
+                 &#127760; Use Free Account (Browser Tab)
+               </button>`
+            : '';
           fwrap.innerHTML = `<div class="llm-blocked">
             <div class="llm-blocked-icon">🤖</div>
-            <div class="llm-blocked-msg"><strong>${cfg.name}</strong> doesn't offer a simple API key.<br/>Open it directly to chat.</div>
+            <div class="llm-blocked-msg"><strong>${cfg.name}</strong> blocks direct embedding.<br/>Use your free account in the browser tab.</div>
             <a class="llm-open-btn" href="${cfg.url}" target="_blank" rel="noopener">Open ${cfg.name} ↗</a>
+            ${freeBtn}
           </div>`;
+          document.getElementById('llm-copilot-tab-btn')?.addEventListener('click', () => {
+            newBrowserTab(cfg.url);
+          });
         }
       }, 2500);
       frame.src = cfg.url;
@@ -1082,6 +1109,12 @@ document.querySelectorAll(".lnk").forEach(function(b){b.addEventListener("click"
     }
 
     function showNoKey(provider, cfg) {
+      const freeBtn = _servedLocally
+        ? `<button class="llm-open-btn" id="llm-free-tab-btn"
+             style="background:var(--gray-600);color:var(--text-primary)">
+             &#127760; Use Free Account (Browser Tab)
+           </button>`
+        : '';
       fwrap.innerHTML = `
         <div class="llm-cred-form">
           <div class="llm-cred-title">${cfg.name}</div>
@@ -1089,10 +1122,16 @@ document.querySelectorAll(".lnk").forEach(function(b){b.addEventListener("click"
             No API key configured for ${cfg.name}.<br/><br/>
             Add your ${cfg.keyLabel} in
             <a href="settings.html" style="color:var(--yellow-600);font-weight:600">Settings → API Keys</a>
-            to chat from the dashboard.
+            to enable API chat, or use your free account in the browser tab below.
           </div>
-          <a class="llm-open-btn" href="${cfg.url}" target="_blank" rel="noopener">Open ${cfg.name} ↗</a>
+          <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
+            <a class="llm-open-btn" href="${cfg.url}" target="_blank" rel="noopener">Open ${cfg.name} ↗</a>
+            ${freeBtn}
+          </div>
         </div>`;
+      document.getElementById('llm-free-tab-btn')?.addEventListener('click', () => {
+        newBrowserTab(cfg.url);
+      });
     }
 
     function showChat(provider, cfg, key) {
@@ -1192,23 +1231,37 @@ document.querySelectorAll(".lnk").forEach(function(b){b.addEventListener("click"
       return data.choices?.[0]?.message?.content ?? '(empty response)';
     }
 
-    // Load AI assistant preferences from Firebase
-    fbGet('settings/aiAssistant').then(ai => {
-      if (!ai) return;
-      if (ai.title) {
-        const t = document.getElementById('llm-title');
-        if (t) t.textContent = ai.title;
-      }
-      if (ai.selected && LLM_CONFIG[ai.selected]) {
-        // Restore saved model selection
-        const providerCfg = LLM_CONFIG[ai.selected];
-        if (ai.model && providerCfg.models?.some(m => m.id === ai.model)) {
-          providerCfg.model = ai.model;
+    // ── Auto-restore AI assistant — localStorage first, Firebase fallback ──
+    (async function restoreAI() {
+      try {
+        // Step 1: read from localStorage (synchronous, instant)
+        let selected = lsGetSelected();
+        let title    = lsGetTitle();
+        let keys     = lsGetKeys();
+
+        // Step 2: if anything is missing, try Firebase and cache it
+        if (!selected || !keys) {
+          const [fbAi, fbKeys] = await Promise.all([
+            fbGet('settings/aiAssistant').catch(() => null),
+            fbGet('settings/aiKeys').catch(() => null),
+          ]);
+          if (!selected && fbAi?.selected) {
+            selected = fbAi.selected;  lsSaveSelected(selected);
+            if (fbAi.title) { title = fbAi.title; lsSaveTitle(title); }
+          }
+          if (!keys && fbKeys) { keys = fbKeys; lsSaveKeys(keys); }
         }
-        sel.value = ai.selected;
-        loadLLM(ai.selected);
-      }
-    }).catch(() => {});
+
+        if (!selected || !keys?.[selected]) return;
+        const providerCfg = LLM_CONFIG[selected];
+        if (!providerCfg) return;
+
+        const t = document.getElementById('llm-title');
+        if (title && t) t.textContent = title;
+        sel.value = selected;
+        loadLLM(selected, keys[selected]);
+      } catch(e) { console.error('AI restore:', e); }
+    })();
   </script>
 </body>
 </html>

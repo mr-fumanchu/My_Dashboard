@@ -122,6 +122,28 @@ function fbSrvGet(path) {
   });
 }
 
+function fbSrvPatch(path, value) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(value ?? null);
+    const u    = new URL(`${FB_SRV}/${path}.json`);
+    const r    = https.request({
+      hostname: u.hostname, path: u.pathname, method: 'PATCH',
+      headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) },
+    }, res => { res.resume(); res.on('end', resolve); });
+    r.on('error', reject); r.write(body); r.end();
+  });
+}
+
+function httpsGetJson(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, r => {
+      let d = '';
+      r.on('data', c => d += c);
+      r.on('end', () => { try { resolve(JSON.parse(d)); } catch { reject(new Error('JSON parse failed')); } });
+    }).on('error', reject);
+  });
+}
+
 function fbSrvPut(path, value) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(value ?? null);
@@ -463,6 +485,268 @@ const server = http.createServer((req, res) => {
       const msg = encodeURIComponent(err.message || 'Unknown error');
       res.writeHead(302, { Location: `/mail-settings.html?oauth=error&msg=${msg}` });
       res.end();
+    });
+    return;
+  }
+
+  // ── YouTube Analytics refresh ────────────────────────────────────
+  if (req.url === '/api/youtube/refresh' && req.method === 'POST') {
+    (async () => {
+      const cfg = await fbSrvGet('settings/youtube');
+      if (!cfg || !cfg.apiKey || !cfg.channelId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'YouTube API key and channel ID not configured. Set settings/youtube/apiKey and settings/youtube/channelId in Firebase.' }));
+        return;
+      }
+      const { apiKey, channelId } = cfg;
+
+      // Channel statistics
+      const chanData = await httpsGetJson(
+        `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${encodeURIComponent(channelId)}&key=${encodeURIComponent(apiKey)}`
+      );
+      const stats = chanData.items?.[0]?.statistics;
+      if (!stats) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Channel not found or YouTube API error', detail: chanData.error?.message || 'No items returned' }));
+        return;
+      }
+
+      // Top 5 videos by view count
+      const searchData = await httpsGetJson(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${encodeURIComponent(channelId)}&order=viewCount&maxResults=5&type=video&key=${encodeURIComponent(apiKey)}`
+      );
+      const videoIds = (searchData.items || []).map(i => i.id?.videoId).filter(Boolean).join(',');
+
+      let topVideos = [];
+      if (videoIds) {
+        const vData = await httpsGetJson(
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${encodeURIComponent(videoIds)}&key=${encodeURIComponent(apiKey)}`
+        );
+        topVideos = (vData.items || []).map(v => ({
+          id:       v.id,
+          title:    v.snippet?.title || v.id,
+          views:    v.statistics?.viewCount    || 0,
+          likes:    v.statistics?.likeCount    || 0,
+          comments: v.statistics?.commentCount || 0,
+        }));
+      }
+
+      await fbSrvPatch('analytics/youtube', {
+        subscribers:  stats.subscriberCount || 0,
+        totalViews:   stats.viewCount       || 0,
+        videoCount:   stats.videoCount      || 0,
+        topVideos,
+        lastUpdated:  new Date().toISOString(),
+      });
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true }));
+    })().catch(err => {
+      if (!res.headersSent) res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    });
+    return;
+  }
+
+  // ── Niche Watch refresh (with auto-discovery) ────────────────────
+  if (req.url === '/api/youtube/niche-refresh' && req.method === 'POST') {
+    (async () => {
+      const cfg = await fbSrvGet('settings/youtube');
+      if (!cfg || !cfg.apiKey) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'YouTube API key not configured.' }));
+        return;
+      }
+      const { apiKey } = cfg;
+
+      const raw = cfg.watchChannels;
+      if (!raw) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'No watch channels configured.' }));
+        return;
+      }
+      let channels = Array.isArray(raw) ? raw : Object.values(raw);
+
+      // ── Auto-discovery: search YouTube for trending niche channels ──
+      const NICHE_QUERIES = ['shamanism healing', 'intuitive energy healing', 'shamanic energy medicine'];
+      const discovered = new Map(); // channelId → { name, subscribers }
+
+      for (const q of NICHE_QUERIES) {
+        try {
+          const srch = await httpsGetJson(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&type=channel&order=relevance&maxResults=8&key=${encodeURIComponent(apiKey)}`
+          );
+          for (const item of (srch.items || [])) {
+            const id   = item.id?.channelId;
+            const name = item.snippet?.title;
+            if (id && name && !discovered.has(id)) discovered.set(id, { name, channelId: id });
+          }
+        } catch { /* skip query on error */ }
+      }
+
+      // Get subscriber counts for discovered channels not already watched
+      const currentIds = new Set(channels.map(c => c.channelId));
+      const newCandidates = [...discovered.values()].filter(c => !currentIds.has(c.channelId));
+
+      if (newCandidates.length) {
+        const idStr = newCandidates.map(c => c.channelId).join(',');
+        try {
+          const statsData = await httpsGetJson(
+            `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${encodeURIComponent(idStr)}&key=${encodeURIComponent(apiKey)}`
+          );
+          for (const item of (statsData.items || [])) {
+            const cand = newCandidates.find(c => c.channelId === item.id);
+            if (cand) cand.subscribers = parseInt(item.statistics?.subscriberCount || '0', 10);
+          }
+        } catch { /* skip stats on error */ }
+      }
+
+      // Get subscriber counts for current channels too
+      const currentIdStr = channels.map(c => c.channelId).join(',');
+      try {
+        const currentStats = await httpsGetJson(
+          `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${encodeURIComponent(currentIdStr)}&key=${encodeURIComponent(apiKey)}`
+        );
+        for (const item of (currentStats.items || [])) {
+          const ch = channels.find(c => c.channelId === item.id);
+          if (ch) ch.subscribers = parseInt(item.statistics?.subscriberCount || '0', 10);
+        }
+      } catch { /* skip */ }
+
+      // Swap: if a new candidate has more subscribers than the lowest current channel, replace it
+      const changelog = [];
+      const qualified = newCandidates.filter(c => c.subscribers > 0);
+
+      for (const cand of qualified) {
+        const lowestCurrent = channels.reduce((a, b) =>
+          (a.subscribers || 0) < (b.subscribers || 0) ? a : b
+        );
+        if (cand.subscribers > (lowestCurrent.subscribers || 0)) {
+          changelog.push({
+            action:    'swapped',
+            removed:   { name: lowestCurrent.name, channelId: lowestCurrent.channelId, subscribers: lowestCurrent.subscribers },
+            added:     { name: cand.name,           channelId: cand.channelId,           subscribers: cand.subscribers },
+            timestamp: new Date().toISOString(),
+          });
+          channels = channels.filter(c => c.channelId !== lowestCurrent.channelId);
+          channels.push({ name: cand.name, channelId: cand.channelId });
+        }
+      }
+
+      // Persist updated channel list and changelog if anything changed
+      if (changelog.length) {
+        await fbSrvPut('settings/youtube/watchChannels', channels);
+        const existingLog = await fbSrvGet('analytics/youtube/nicheChangelog').catch(() => []);
+        const log = Array.isArray(existingLog) ? existingLog : Object.values(existingLog || {});
+        await fbSrvPut('analytics/youtube/nicheChangelog', [...log, ...changelog].slice(-50));
+      }
+
+      // ── Fetch latest video + stats for each (final) channel ────────
+      const results = await Promise.all(channels.map(async ch => {
+        try {
+          const chanData = await httpsGetJson(
+            `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${encodeURIComponent(ch.channelId)}&key=${encodeURIComponent(apiKey)}`
+          );
+          const subscribers = chanData.items?.[0]?.statistics?.subscriberCount || 0;
+
+          const searchData = await httpsGetJson(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${encodeURIComponent(ch.channelId)}&order=date&maxResults=1&type=video&key=${encodeURIComponent(apiKey)}`
+          );
+          const latest = searchData.items?.[0];
+          if (!latest) return { name: ch.name, channelId: ch.channelId, subscribers, latestVideo: null };
+
+          const videoId = latest.id?.videoId;
+          const vData = await httpsGetJson(
+            `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${encodeURIComponent(videoId)}&key=${encodeURIComponent(apiKey)}`
+          );
+          const vs = vData.items?.[0]?.statistics || {};
+
+          return {
+            name: ch.name,
+            channelId: ch.channelId,
+            subscribers,
+            latestVideo: {
+              id:          videoId,
+              title:       latest.snippet?.title || videoId,
+              publishedAt: latest.snippet?.publishedAt || null,
+              views:       vs.viewCount    || 0,
+              likes:       vs.likeCount    || 0,
+              comments:    vs.commentCount || 0,
+            },
+          };
+        } catch (e) {
+          return { name: ch.name, channelId: ch.channelId, error: e.message };
+        }
+      }));
+
+      await fbSrvPut('analytics/youtube/nicheWatch', results);
+
+      // ── Last refresh message (honest, no fabrication) ────────────
+      const refreshMsg = changelog.length > 0
+        ? `${changelog.length} channel${changelog.length > 1 ? 's' : ''} swapped in last refresh`
+        : 'No changes since last refresh';
+      await fbSrvPut('analytics/youtube/nicheLastRefresh', {
+        timestamp: new Date().toISOString(),
+        swaps:     changelog.length,
+        message:   refreshMsg,
+      });
+
+      // ── Trending videos in niche (real YouTube data only) ─────────
+      const trendingVideos = [];
+      const seenVideoIds = new Set();
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const trendQueries = ['shamanism healing', 'intuitive energy healing', 'shamanic energy medicine'];
+
+      for (const q of trendQueries) {
+        try {
+          const tData = await httpsGetJson(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&type=video&order=viewCount&maxResults=5&publishedAfter=${encodeURIComponent(thirtyDaysAgo)}&key=${encodeURIComponent(apiKey)}`
+          );
+          for (const item of (tData.items || [])) {
+            const vid = item.id?.videoId;
+            if (vid && !seenVideoIds.has(vid)) {
+              seenVideoIds.add(vid);
+              trendingVideos.push({
+                id:          vid,
+                title:       item.snippet?.title       || '',
+                channelName: item.snippet?.channelTitle || '',
+                publishedAt: item.snippet?.publishedAt  || null,
+              });
+            }
+          }
+        } catch { /* skip query on error */ }
+      }
+
+      // Get view counts for trending videos
+      if (trendingVideos.length) {
+        try {
+          const tIds = trendingVideos.map(v => v.id).join(',');
+          const tStats = await httpsGetJson(
+            `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${encodeURIComponent(tIds)}&key=${encodeURIComponent(apiKey)}`
+          );
+          for (const item of (tStats.items || [])) {
+            const v = trendingVideos.find(x => x.id === item.id);
+            if (v) v.views = parseInt(item.statistics?.viewCount || '0', 10);
+          }
+        } catch { /* skip */ }
+      }
+
+      // Sort by views, keep top 5
+      const top5Trending = trendingVideos
+        .filter(v => v.title)
+        .sort((a, b) => (b.views || 0) - (a.views || 0))
+        .slice(0, 5);
+
+      await fbSrvPut('analytics/youtube/nicheTrending', {
+        fetchedAt: new Date().toISOString(),
+        videos:    top5Trending,
+      });
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, count: results.length, swaps: changelog.length }));
+    })().catch(err => {
+      if (!res.headersSent) res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
     });
     return;
   }
