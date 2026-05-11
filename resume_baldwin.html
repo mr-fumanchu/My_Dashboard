@@ -6,100 +6,60 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 11px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 11.5px;
       color: #1a1a1a;
       background: #fff;
-      line-height: 1.45;
+      padding: 0.48in 0.55in;
+      line-height: 1.48;
     }
 
-    /* ── Header ── */
-    .header {
-      text-align: center;
-      padding-bottom: 9px;
-      margin-bottom: 10px;
-      border-bottom: 2.5px solid #1a1a1a;
-    }
-    .name {
-      font-size: 28px;
-      font-weight: 900;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-    }
-    .title {
-      font-size: 11px;
-      font-weight: 400;
-      color: #555;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      margin-top: 3px;
-    }
-    .contact {
-      margin-top: 5px;
-      font-size: 10.5px;
-      color: #333;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
+    /* Header */
+    .header { text-align: center; padding-bottom: 10px; margin-bottom: 12px; border-bottom: 2.5px solid #1a1a1a; }
+    .name { font-family: Arial, sans-serif; font-size: 30px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+    .title { font-family: Arial, sans-serif; font-size: 11px; color: #555; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+    .contact { margin-top: 6px; font-family: Arial, sans-serif; font-size: 10.5px; color: #333; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
 
-    /* ── Section ── */
-    .section { margin-bottom: 9px; }
+    /* Sections */
+    .section { margin-bottom: 11px; }
     .section-title {
-      font-size: 9.5px;
-      font-weight: 800;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: #fff;
-      background: #1a1a1a;
-      padding: 2px 7px;
-      margin-bottom: 7px;
-      display: inline-block;
+      font-family: Arial, sans-serif; font-size: 9px; font-weight: 900;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      border-bottom: 1.5px solid #1a1a1a; padding-bottom: 3px; margin-bottom: 8px;
     }
 
-    /* ── Summary ── */
-    .summary { font-size: 11px; line-height: 1.55; color: #222; }
+    /* Summary */
+    .summary { font-size: 11px; line-height: 1.6; }
 
-    /* ── Job ── */
-    .job { margin-bottom: 8px; }
+    /* Jobs */
+    .job { margin-bottom: 9px; }
     .job:last-child { margin-bottom: 0; }
     .job-header { display: flex; justify-content: space-between; align-items: baseline; }
-    .job-title { font-size: 12px; font-weight: 700; }
-    .job-date { font-size: 10px; color: #555; white-space: nowrap; }
-    .job-meta { font-size: 10.5px; color: #555; margin-bottom: 4px; }
+    .job-title { font-family: Arial, sans-serif; font-size: 12px; font-weight: 700; }
+    .job-date { font-family: Arial, sans-serif; font-size: 10px; color: #555; white-space: nowrap; }
+    .job-meta { font-family: Arial, sans-serif; font-size: 10.5px; color: #555; margin-bottom: 4px; }
     .job-meta strong { color: #333; }
-    ul.bullets { padding-left: 14px; margin-top: 2px; }
-    ul.bullets li { font-size: 10.5px; line-height: 1.5; margin-bottom: 2px; color: #222; }
+    ul.bullets { padding-left: 15px; margin-top: 3px; }
+    ul.bullets li { font-size: 10.5px; line-height: 1.52; margin-bottom: 2px; }
 
-    /* ── Skills ── */
+    /* Skills */
     .skills-table { width: 100%; border-collapse: collapse; }
-    .skills-table td { vertical-align: top; padding: 0 8px 5px 0; width: 50%; }
+    .skills-table td { vertical-align: top; padding: 0 10px 6px 0; width: 50%; }
     .skills-table td:last-child { padding-right: 0; }
-    .skill-group-title { font-size: 10px; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
+    .skill-group-title { font-family: Arial, sans-serif; font-size: 10px; font-weight: 700; margin-bottom: 2px; }
     .skill-tags { font-size: 10px; color: #333; line-height: 1.55; }
 
-    /* ── Education & Certs ── */
-    .edu-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
-    .edu-item .deg { font-size: 11px; font-weight: 700; }
-    .edu-item .school { font-size: 10.5px; color: #444; }
-    .cert-block .cert-title { font-size: 10px; font-weight: 700; margin-bottom: 2px; }
-    .cert-block .cert-list { font-size: 10.5px; color: #333; line-height: 1.55; }
+    /* Education */
+    .edu-row { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
+    .edu-deg { font-family: Arial, sans-serif; font-size: 11px; font-weight: 700; }
+    .cert-list { font-size: 10.5px; color: #333; white-space: nowrap; }
 
-    /* ── Footer ── */
-    .footer-note {
-      margin-top: 8px;
-      font-size: 9px;
-      color: #999;
-      text-align: center;
-      border-top: 1px solid #ddd;
-      padding-top: 5px;
-    }
+    /* Footer */
+    .footer-note { margin-top: 9px; font-family: Arial, sans-serif; font-size: 9px; color: #999; text-align: center; border-top: 1px solid #ddd; padding-top: 5px; }
   </style>
 </head>
-<body style="padding: 0.45in 0.5in;">
+<body>
 
-  <!-- HEADER -->
   <div class="header">
     <div class="name">Tony Baldwin</div>
     <div class="title">Senior Kitchen &amp; Bath Designer &nbsp;&bull;&nbsp; Design Sales Consultant</div>
@@ -111,15 +71,13 @@
     </div>
   </div>
 
-  <!-- PROFESSIONAL SUMMARY -->
   <div class="section">
     <div class="section-title">Professional Summary</div>
     <div class="summary">
-      Results-driven <strong>Senior Kitchen &amp; Bath Designer</strong> with 6+ years of experience delivering full-cycle residential renovation projects from concept through installation. Proficient in <strong>20/20 Design</strong> for 3D space planning, cabinetry layout, and client presentations. Proven sales track record at Lowe's and HPM Building Supply — translating client visions into detailed design plans while managing budgets, vendor relationships, and timelines. Additional expertise in <strong>Adobe Creative Suite</strong>, digital marketing, and branding gives a unique edge in design showroom environments demanding both creative excellence and high-touch sales performance.
+      Results-driven <strong>Senior Kitchen &amp; Bath Designer</strong> with 6+ years of experience delivering full-cycle residential renovation projects from concept through installation. Proficient in <strong>20/20 Design</strong> for 3D space planning, cabinetry layout, and client presentations. Proven sales track record at Lowe's and HPM Building Supply — translating client visions into detailed design plans while managing budgets, vendor relationships, and timelines. Additional expertise in <strong>Adobe Creative Suite</strong>, digital marketing, and branding gives a unique edge in showroom environments demanding both creative excellence and high-touch client sales performance.
     </div>
   </div>
 
-  <!-- WORK EXPERIENCE -->
   <div class="section">
     <div class="section-title">Work Experience</div>
 
@@ -158,7 +116,7 @@
       <ul class="bullets">
         <li>Directed concept development, layout planning, visual branding, and client presentations across diverse industries.</li>
         <li>Delivered high-quality creative assets using Adobe Creative Suite — Photoshop, Illustrator, InDesign, Premiere, and After Effects.</li>
-        <li>Developed content strategies, brand identity systems, and managed projects from brief through final delivery.</li>
+        <li>Developed content strategies and brand identity systems; managed projects from brief through final delivery.</li>
       </ul>
     </div>
 
@@ -175,7 +133,6 @@
     </div>
   </div>
 
-  <!-- SKILLS -->
   <div class="section">
     <div class="section-title">Core Skills &amp; Competencies</div>
     <table class="skills-table">
@@ -202,16 +159,11 @@
     </table>
   </div>
 
-  <!-- EDUCATION & CERTIFICATIONS -->
   <div class="section">
     <div class="section-title">Education &amp; Certifications</div>
     <div class="edu-row">
-      <div class="edu-item">
-        <div class="deg">Bachelor's Degree &mdash; University of Toledo</div>
-      </div>
-      <div class="cert-block">
-        <div class="cert-list">ServSafe Certified &nbsp;&bull;&nbsp; Valid Driver's License &nbsp;&bull;&nbsp; Certified Reiki Practitioner</div>
-      </div>
+      <div class="edu-deg">Bachelor's Degree &mdash; University of Toledo</div>
+      <div class="cert-list">ServSafe Certified &nbsp;&bull;&nbsp; Valid Driver's License &nbsp;&bull;&nbsp; Certified Reiki Practitioner</div>
     </div>
   </div>
 
