@@ -1,4 +1,8 @@
 .DS_Store
-.claude/
+.claude/settings.local.json
 node_modules/
 *.log
+shamanic_drum_30min.wav
+shamanic_drum_30min.mp3
+shamanic_drum_30min.7z
+shamanic_drum_part*.mp3
